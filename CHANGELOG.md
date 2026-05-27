@@ -4,6 +4,14 @@ All notable changes to **AniNewsAPI** will be documented in this file.
 
 ---
 
+## [4.1.3] - 2026-05-27
+
+### Fixed
+- **Source metrics always zero on Vercel**: `sourceMetrics` was in-memory only, reset on every serverless cold start. Now persisted to disk (`_source_metrics.json`) so `/api/sources` returns real data across invocations
+- **Flush clears metrics**: `POST /api/cache/clear` now also resets in-memory source metrics
+
+---
+
 ## [4.1.2] - 2026-05-27
 
 ### Updated

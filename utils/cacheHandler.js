@@ -30,8 +30,17 @@ const stats = {
   lastRefresh: null
 };
 
-// Per-source tracking
-const sourceMetrics = {};
+// Per-source tracking — persisted to disk for serverless survival
+const SOURCE_METRICS_FILE = path.join(CACHE_DIR, '_source_metrics.json');
+
+let sourceMetrics = {};
+try {
+  if (fs.existsSync(SOURCE_METRICS_FILE)) {
+    sourceMetrics = JSON.parse(fs.readFileSync(SOURCE_METRICS_FILE, 'utf8'));
+  }
+} catch (e) {
+  console.warn('[Cache] Could not load source metrics:', e.message);
+}
 
 module.exports = {
   get: (key) => {
@@ -112,6 +121,8 @@ module.exports = {
     } catch (e) {
       console.error('[Cache] Flush error:', e.message);
     }
+    // Reset in-memory metrics
+    Object.keys(sourceMetrics).forEach(k => delete sourceMetrics[k]);
   },
   
   getStats: () => ({
@@ -120,7 +131,7 @@ module.exports = {
     ttl: CACHE_TTL
   }),
 
-  // Track per-source fetch results
+  // Track per-source fetch results — persists to disk
   trackSource: (sourceKey, { count, error } = {}) => {
     if (!sourceMetrics[sourceKey]) {
       sourceMetrics[sourceKey] = { fetchCount: 0, lastFetch: null, lastError: null, articleCount: 0 };
@@ -130,6 +141,11 @@ module.exports = {
     m.lastFetch = new Date().toISOString();
     if (error) m.lastError = { message: error, time: m.lastFetch };
     if (count !== undefined) m.articleCount = count;
+    try {
+      fs.writeFileSync(SOURCE_METRICS_FILE, JSON.stringify(sourceMetrics, null, 2));
+    } catch (e) {
+      console.warn('[Cache] Could not persist source metrics:', e.message);
+    }
   },
 
   getSourceMetrics: () => ({ ...sourceMetrics }),

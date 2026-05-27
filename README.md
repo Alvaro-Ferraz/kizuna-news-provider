@@ -9,7 +9,7 @@
 **Real-time Anime News Aggregation API**
 
 ![Vercel](https://img.shields.io/badge/Deployed%20On-Vercel-black?logo=vercel&style=flat-square)
-![Version](https://img.shields.io/badge/Version-4.1.2-89b4fa?style=flat-square&labelColor=1e1e2e)
+![Version](https://img.shields.io/badge/Version-4.1.3-89b4fa?style=flat-square&labelColor=1e1e2e)
 ![Node](https://img.shields.io/badge/Node.js-≥20-339933?logo=node.js&style=flat-square)
 ![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)
 ![Sources](https://img.shields.io/badge/Sources-7-f5c2e7?style=flat-square&labelColor=1e1e2e)
