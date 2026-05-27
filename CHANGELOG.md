@@ -4,6 +4,14 @@ All notable changes to **AniNewsAPI** will be documented in this file.
 
 ---
 
+## [4.1.1] - 2026-05-27
+
+### Fixed
+- **Excerpt duplication bug**: MAL excerpts were returning title text instead of actual article descriptions. Root cause: generic `p` CSS selector in excerpt extraction matched `<p class="title">` before `<div class="text">`. Fixed in `fetchMyAnimeList.js` and all other fetchers (AnimeCorner, AnimeHerald, ComicBook, Crunchyroll, OtakuNews) that had the same `p` fallback risk
+- **Greedy selector in MAL fetcher**: Removed `[class*="news"]` selector that matched child elements (`.news-unit-right`) causing duplicate processing
+
+---
+
 ## [4.1.0] - 2026-05-27
 
 ### Added

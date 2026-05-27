@@ -44,7 +44,7 @@ async function fetchFromWeb(urlIndex = 0) {
         const $el = $(el);
         const title = $el.find('h2, h3, .title, .news-item__title').first().text().trim();
         if (!title || title.length < 10) return;
-        const excerpt = $el.find('.description, .excerpt, p').first().text().trim();
+        const excerpt = $el.find('.description, .excerpt').first().text().trim();
         const dateAttr = $el.find('time').attr('datetime');
         const dateText = $el.find('time, .date').first().text().trim();
         const date = dateParser.parse(dateAttr || dateText, new Date());

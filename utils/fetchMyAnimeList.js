@@ -26,12 +26,11 @@ async function fetchFromWeb() {
     const $ = cheerio.load(data);
     const articles = [];
     
-    // Try multiple selectors for news units
+    // Selectors for news unit containers (order matters — most specific first)
     const selectors = [
       '.news-unit',
       '.news-list .news-unit',
-      '[class*="news"]',
-      '.latest-news .news-item'
+      '.news-unit.clearfix'
     ];
     
     for (const selector of selectors) {
@@ -44,8 +43,8 @@ async function fetchFromWeb() {
         const title = $el.find('.title a, h2 a, h3 a, a.title').first().text().trim();
         if (!title) return;
         
-        // Extract excerpt
-        const excerpt = $el.find('.text, .excerpt, .summary, p').first().text().trim();
+        // Extract excerpt — use .text first (MAL's actual excerpt class), avoid generic 'p' which matches .title
+        const excerpt = $el.find('.text, .excerpt, .summary').first().text().trim();
         
         // Extract date - MAL has specific date format in .info
         const infoText = $el.find('.info, .date, time').first().text().trim();

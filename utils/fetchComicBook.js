@@ -48,7 +48,7 @@ async function fetchFromWeb() {
         if (!title) return;
         
         // Extract excerpt
-        const excerpt = $el.find('.excerpt, .summary, p').first().text().trim();
+        const excerpt = $el.find('.excerpt, .summary').first().text().trim();
         
         // Extract date
         const dateAttr = $el.find('time').attr('datetime');
