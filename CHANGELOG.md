@@ -4,6 +4,13 @@ All notable changes to **AniNewsAPI** will be documented in this file.
 
 ---
 
+## [4.2.2] - 2026-05-28
+
+### Fixed
+- **TOS & Privacy routes restored**: Re-added `/tos` → `/tos.html` and `/privacy` → `/privacy.html` rewrites in `vercel.json` that were lost during restructuring — pages now load correctly on Vercel
+
+---
+
 ## [4.2.1] - 2026-05-28
 
 ### Changed
