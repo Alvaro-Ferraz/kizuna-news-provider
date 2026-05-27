@@ -1,5 +1,11 @@
 > [!NOTE]
-> The old deployment URL `https://aninewsapi.vercel.app/` is no longer accessible. Use the current URL: **https://aninews.vercel.app/**
+> The Old Deployment URL `https://aninewsapi.vercel.app` Is No Longer Accessible. Use The Current URL: **https://aninews.vercel.app**
+
+<div align="center">
+  
+  <img src="https://capsule-render.vercel.app/api?type=waving&height=300&color=gradient&text=𝗔𝗻𝗶𝗡𝗲𝘄𝘀𝗔𝗣𝗜&fontAlignY=30&fontSize=90&desc=𝖱𝖾𝖺𝗅-𝖳𝗂𝗆𝖾%20𝖠𝗇𝗂𝗆𝖾%20𝖭𝖾𝗐𝗌%20𝖠𝗀𝗀𝗋𝖾𝗀𝖺𝗍𝗂𝗈𝗇%20𝖠𝖯𝖨&descSize=30" />
+
+</div>
 
 <p align="center">
   <a href="https://github.com/Shineii86/AniNewsAPI/stargazers"><img src="https://img.shields.io/github/stars/Shineii86/AniNewsAPI?style=for-the-badge&logo=github&color=f43f8e&logoColor=white" alt="Stars"/></a>
@@ -937,7 +943,36 @@ Yes! Use <code>npm start</code> to run the Express server on any VPS, Docker con
 
 ## 🤝 Contributing
 
-Contributions are welcome and appreciated! Here's how you can help:
+*Contributions are welcome and appreciated! Here's how you can help:*
+
+<table>
+<tr>
+<td width="25%" align="center">
+
+### 🐛 Report Bugs
+Found something broken?
+
+[Open an Issue](https://github.com/Shineii86/AniNewsAPI/issues)
+
+</td>
+<td width="25%" align="center">
+
+### 💡 Suggest Features
+Have an idea for the notebook?
+
+[Start a Discussion](https://github.com/Shineii86/AniNewsAPI/issues)
+
+</td>
+<td width="25%" align="center">
+
+### 🔀 Submit PRs
+Ready to contribute code?
+
+[Fork & Submit](https://github.com/Shineii86/AniNewsAPI/fork)
+
+</td>
+</tr>
+</table>
 
 ### 🔄 How to Contribute
 
@@ -1030,20 +1065,30 @@ git push origin feature/amazing-feature
 
 ## 📄 License
 
-This project is licensed under the **MIT License** — see the [LICENSE](./LICENSE) file for details.
-
-```
-MIT License — Free to use, modify, and distribute.
-```
+<div align="center">
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-22c55e?style=for-the-badge&logo=mit&logoColor=white)](./LICENSE)
+
+This project is licensed under the **MIT License**.
+
+Free to use, modify, and distribute — see the [LICENSE](LICENSE) file for details.
+
+</div>
 
 ---
 
 ## 👤 Author
 
+<div align="center">
+
+  <a href="https://github.com/Shineii86/AniNewsAPI">
+  <img src="https://github.com/AniWaifuBot/Waifus/blob/main/Source/Banner.png" alt="Banner" width="100%" />
+  </a>
+  
+</div>
+  
 <p align="center">
-  <b style="font-size: 1.2em;">Shineii86</b>
+  <b style="font-size: 5.5em;">Shinei Nouzen</b>
   <br/>
   <sub>Full-Stack Developer & Anime Enthusiast</sub>
   <br/><br/>
@@ -1068,7 +1113,7 @@ MIT License — Free to use, modify, and distribute.
 ---
 
 <p align="center">
-  <b>Made with ❤️ for the anime community</b>
+  <b>Made With ❤️ For The Anime Community</b>
   <br/><br/>
-  <sub>© 2026 Shineii86. All rights reserved.</sub>
+  <sub>© 2026 Shineii86. All Rights Reserved.</sub>
 </p>
