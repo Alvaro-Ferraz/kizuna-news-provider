@@ -24,7 +24,7 @@ async function fetchFromGoogleNews() {
       const imgMatch = item['content:encoded']?.match(/<img[^>]+src="([^"]+)"/);
       if (imgMatch) image = imgMatch[1];
       const tags = item.categories?.map(c => c.toLowerCase()) || ['news', 'anime'];
-      if (cleanTitle && item.link) articles.push({ title: cleanTitle, slug: generateSlug(cleanTitle, 'ann'), source: 'Anime News Network', excerpt: excerpt.substring(0, 200) || `${cleanTitle.slice(0, 120)}...`, date: date.toISOString(), image, link: item.link, tags });
+      if (cleanTitle && item.link) articles.push({ title: cleanTitle, slug: generateSlug(cleanTitle, 'ann'), source: 'Anime News Network', excerpt: excerpt, date: date.toISOString(), image, link: item.link, tags });
     });
     console.log(`[ANN] Found ${articles.length} articles from Google News`);
     return articles;
@@ -53,7 +53,7 @@ async function fetchFromWeb() {
         if (link && !link.startsWith('http')) link = `https://www.animenewsnetwork.com${link}`;
         const tags = [];
         $el.find('.tags a, .category a').each((i, t) => { const tt = $(t).text().trim().toLowerCase(); if (tt) tags.push(tt); });
-        if (title && link) articles.push({ title, slug: generateSlug(title, 'ann'), source: 'Anime News Network', excerpt: excerpt || `${title.slice(0, 120)}...`, date: date.toISOString(), image, link, tags: tags.length > 0 ? tags : ['news', 'anime'] });
+        if (title && link) articles.push({ title, slug: generateSlug(title, 'ann'), source: 'Anime News Network', excerpt: excerpt, date: date.toISOString(), image, link, tags: tags.length > 0 ? tags : ['news', 'anime'] });
       });
       if (articles.length > 0) break;
     }

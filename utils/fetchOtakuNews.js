@@ -24,7 +24,7 @@ async function fetchFromGoogleNews() {
       const imgMatch = item['content:encoded']?.match(/<img[^>]+src="([^"]+)"/);
       if (imgMatch) image = imgMatch[1];
       const tags = item.categories?.map(c => c.toLowerCase()) || ['community', 'magazine'];
-      if (cleanTitle && item.link) articles.push({ title: cleanTitle, slug: generateSlug(cleanTitle, 'otakuusa'), source: 'Otaku USA Magazine', excerpt: excerpt.substring(0, 200) || `${cleanTitle.slice(0, 120)}...`, date: date.toISOString(), image, link: item.link, tags });
+      if (cleanTitle && item.link) articles.push({ title: cleanTitle, slug: generateSlug(cleanTitle, 'otakuusa'), source: 'Otaku USA Magazine', excerpt: excerpt, date: date.toISOString(), image, link: item.link, tags });
     });
     console.log(`[OtakuUSA] Found ${articles.length} articles from Google News`);
     return articles;
@@ -53,7 +53,7 @@ async function fetchFromWeb(urlIndex = 0) {
         const link = $el.find('h2 a, h3 a, .entry-title a').first().attr('href') || '';
         const tags = [];
         $el.find('.cat-links a, .category a, .tags a').each((i, t) => { const tt = $(t).text().trim().toLowerCase(); if (tt) tags.push(tt); });
-        if (title && link) articles.push({ title, slug: generateSlug(title, 'otakuusa'), source: 'Otaku USA Magazine', excerpt: excerpt.substring(0, 200) || `${title.slice(0, 120)}...`, date: date.toISOString(), image, link, tags: tags.length > 0 ? tags : ['community', 'magazine'] });
+        if (title && link) articles.push({ title, slug: generateSlug(title, 'otakuusa'), source: 'Otaku USA Magazine', excerpt: excerpt, date: date.toISOString(), image, link, tags: tags.length > 0 ? tags : ['community', 'magazine'] });
       });
       if (articles.length > 0) break;
     }

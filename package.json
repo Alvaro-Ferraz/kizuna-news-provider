@@ -1,6 +1,6 @@
 {
   "name": "aninews-api",
-  "version": "4.1.5",
+  "version": "4.1.6",
   "description": "Powerful Anime News API with multi-source scraping",
   "main": "server.js",
   "scripts": {

@@ -4,6 +4,14 @@ All notable changes to **AniNewsAPI** will be documented in this file.
 
 ---
 
+## [4.1.6] - 2026-05-27
+
+### Fixed
+- **Full excerpts, no truncation**: Removed 200-char `substring(0, 200)` limit from all 7 fetchers — excerpts now show complete descriptions
+- **No more fake excerpts**: Removed `${title.slice(0, 120)}...` fallback from all fetchers and news.js — empty excerpt stays empty instead of showing truncated title as description
+
+---
+
 ## [4.1.5] - 2026-05-27
 
 ### Fixed

@@ -24,7 +24,7 @@ async function fetchFromGoogleNews() {
       const imgMatch = item['content:encoded']?.match(/<img[^>]+src="([^"]+)"/);
       if (imgMatch) image = imgMatch[1];
       const tags = item.categories?.map(c => c.toLowerCase()) || ['official', 'news'];
-      if (cleanTitle && item.link) articles.push({ title: cleanTitle, slug: generateSlug(cleanTitle, 'crunchyroll'), source: 'Crunchyroll', excerpt: excerpt.substring(0, 200) || `${cleanTitle.slice(0, 120)}...`, date: date.toISOString(), image, link: item.link, tags });
+      if (cleanTitle && item.link) articles.push({ title: cleanTitle, slug: generateSlug(cleanTitle, 'crunchyroll'), source: 'Crunchyroll', excerpt: excerpt, date: date.toISOString(), image, link: item.link, tags });
     });
     console.log(`[Crunchyroll] Found ${articles.length} articles from Google News`);
     return articles;
@@ -53,7 +53,7 @@ async function fetchFromWeb(urlIndex = 0) {
         let link = $el.find('a').first().attr('href') || '';
         if (link && !link.startsWith('http')) link = `https://www.crunchyroll.com${link}`;
         const tags = [$el.find('.category, .tag').first().text().trim().toLowerCase() || 'official', 'news'];
-        if (title && link) articles.push({ title, slug: generateSlug(title, 'crunchyroll'), source: 'Crunchyroll', excerpt: excerpt.substring(0, 200) || `${title.slice(0, 120)}...`, date: date.toISOString(), image, link, tags });
+        if (title && link) articles.push({ title, slug: generateSlug(title, 'crunchyroll'), source: 'Crunchyroll', excerpt: excerpt, date: date.toISOString(), image, link, tags });
       });
       if (articles.length > 0) break;
     }

@@ -116,7 +116,7 @@ async function fetchFromSources(source) {
   allNews = allNews.map(article => ({
     ...article,
     tags: [...new Set([...(article.tags || []), article.source.toLowerCase().replace(/\s+/g, '-')])],
-    excerpt: article.excerpt || `${article.title.slice(0, 120)}...`,
+    excerpt: article.excerpt || '',
     image: article.image || '',
     date: article.date || new Date().toISOString()
   }));
