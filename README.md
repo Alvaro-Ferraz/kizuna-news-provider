@@ -84,45 +84,33 @@
 
 ### How It Works
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        Client Request                           │
-│                     (Browser / App / curl)                      │
-└──────────────────────────┬──────────────────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                  Vercel Edge / Express Server                   │
-│          CORS ─ Security Headers ─ Rate Limiting                │
-└──────────────────────────┬──────────────────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                      Cache Check                               │
-│            node-cache (memory) ─ disk fallback                  │
-│                  HIT → instant response                         │
-│                  MISS → fetch from sources                      │
-└──────────────────────────┬──────────────────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                   7 Concurrent Fetchers                         │
-│  ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐   │
-│  │ ANN │ │ MAL │ │ CR  │ │ AC  │ │ OU  │ │ AH  │ │ CB  │   │
-│  └──┬──┘ └──┬──┘ └──┬──┘ └──┬──┘ └──┬──┘ └──┬──┘ └──┬──┘   │
-│     └───────┴───────┴───────┼───────┴───────┴───────┘        │
-│                             │                                  │
-│              RSS / Google News RSS / Web Scraping              │
-│              3 retries ─ 15s timeout ─ exponential backoff     │
-└──────────────────────────┬──────────────────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                  Deduplicate ─ Enrich ─ Respond                 │
-│          Cross-source dedup by normalized title                 │
-│          Tag normalization ─ Date parsing ─ Slug generation     │
-│          JSON / RSS 2.0 XML / SSE                               │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    A["🌐 Client Request<br/>(Browser / App / curl)"] --> B["🛡️ Vercel Edge / Express Server<br/>CORS · Security Headers · Rate Limiting"]
+    B --> C{"💾 Cache Check<br/>(node-cache + disk)"}
+    C -- HIT --> D["⚡ Return Cached Response<br/>~200ms"]
+    C -- MISS --> E["📰 7 Concurrent Fetchers"]
+
+    E --> E1["ANN"]
+    E --> E2["MAL"]
+    E --> E3["Crunchyroll"]
+    E --> E4["Anime Corner"]
+    E --> E5["Otaku USA"]
+    E --> E6["Anime Herald"]
+    E --> E7["Comic Book"]
+
+    E1 & E2 & E3 & E4 & E5 & E6 & E7 --> F["🔄 RSS / Google News RSS / Web Scraping<br/>3 retries · 15s timeout · exponential backoff"]
+    F --> G["🧹 Deduplicate · Enrich · Cache"]
+    G --> H["📤 Respond<br/>JSON · RSS 2.0 XML · SSE"]
+
+    style A fill:#1e1e2e,stroke:#a78bfa,color:#f1f5f9
+    style B fill:#1e1e2e,stroke:#6366f1,color:#f1f5f9
+    style C fill:#1e1e2e,stroke:#f43f8e,color:#f1f5f9
+    style D fill:#1e1e2e,stroke:#22c55e,color:#f1f5f9
+    style E fill:#1e1e2e,stroke:#a855f7,color:#f1f5f9
+    style F fill:#1e1e2e,stroke:#eab308,color:#f1f5f9
+    style G fill:#1e1e2e,stroke:#06b6d4,color:#f1f5f9
+    style H fill:#1e1e2e,stroke:#22c55e,color:#f1f5f9
 ```
 
 ---
@@ -265,34 +253,24 @@
 
 ### Caching Architecture
 
-```
-Request
-  │
-  ▼
-┌─────────────────┐     ┌─────────────────┐
-│  Memory Cache   │────▶│  Return cached  │
-│  (node-cache)   │ HIT │  response       │
-└────────┬────────┘     └─────────────────┘
-         │ MISS
-         ▼
-┌─────────────────┐     ┌─────────────────┐
-│   Disk Cache    │────▶│  Promote to     │
-│  (JSON files)   │ HIT │  memory, return │
-└────────┬────────┘     └─────────────────┘
-         │ MISS
-         ▼
-┌─────────────────┐
-│  Fetch from     │
-│  7 sources      │
-│  (concurrent)   │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│  Cache result   │
-│  (memory+disk)  │
-│  Return fresh   │
-└─────────────────┘
+```mermaid
+flowchart TD
+    A["📥 Request"] --> B{"🧠 Memory Cache<br/>(node-cache)"}
+    B -- HIT --> C["⚡ Return Cached<br/>~200ms"]
+    B -- MISS --> D{"💾 Disk Cache<br/>(JSON files)"}
+    D -- HIT --> E["🔄 Promote to Memory<br/>Return"]
+    D -- MISS --> F["📰 Fetch from 7 Sources<br/>(concurrent)"]
+    F --> G["💾 Cache Result<br/>(memory + disk)"]
+    G --> H["📤 Return Fresh"]
+
+    style A fill:#1e1e2e,stroke:#a78bfa,color:#f1f5f9
+    style B fill:#1e1e2e,stroke:#f43f8e,color:#f1f5f9
+    style C fill:#1e1e2e,stroke:#22c55e,color:#f1f5f9
+    style D fill:#1e1e2e,stroke:#6366f1,color:#f1f5f9
+    style E fill:#1e1e2e,stroke:#06b6d4,color:#f1f5f9
+    style F fill:#1e1e2e,stroke:#eab308,color:#f1f5f9
+    style G fill:#1e1e2e,stroke:#a855f7,color:#f1f5f9
+    style H fill:#1e1e2e,stroke:#22c55e,color:#f1f5f9
 ```
 
 > 💡 Serverless functions have read-only filesystems except `/tmp`. The disk cache writes to `/tmp` on Vercel, surviving across warm invocations.
