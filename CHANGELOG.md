@@ -4,6 +4,22 @@ All notable changes to **AniNewsAPI** will be documented in this file.
 
 ---
 
+## [4.1.0] - 2026-05-27
+
+### Added
+- **Date range filtering**: `GET /api/news?from=YYYY-MM-DD&to=YYYY-MM-DD` and `GET /api/search?from=&to=` — filter articles by publication date range
+- **Cursor-based pagination**: `GET /api/news?cursor=<encoded>` — opaque cursor returned in `meta.nextCursor` for efficient forward pagination (backwards compatible with `offset`)
+- **Source health endpoint**: `GET /api/sources` — per-source health status (healthy/degraded/unknown), article count, last fetch time, and error tracking
+- **Source tracking in cacheHandler**: `trackSource()` and `getSourceMetrics()` methods for monitoring fetch results across all 7 news sources
+
+### Updated
+- **OpenAPI spec**: Added `from`, `to`, `cursor` parameters to `/api/news`; `from`, `to` to `/api/search`; new `/api/sources` path
+- **Landing page**: Added `/api/sources` endpoint card and playground dropdown option
+- **index.js**: Added `/api/sources` to Vercel landing page endpoint list
+- **404 handler**: Added `/api/sources` to availableEndpoints list
+
+---
+
 ## [4.0.8] - 2026-05-27
 
 ### Fixed

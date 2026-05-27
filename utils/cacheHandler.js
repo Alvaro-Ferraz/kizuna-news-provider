@@ -30,6 +30,9 @@ const stats = {
   lastRefresh: null
 };
 
+// Per-source tracking
+const sourceMetrics = {};
+
 module.exports = {
   get: (key) => {
     try {
@@ -116,6 +119,20 @@ module.exports = {
     keys: cache.keys(),
     ttl: CACHE_TTL
   }),
+
+  // Track per-source fetch results
+  trackSource: (sourceKey, { count, error } = {}) => {
+    if (!sourceMetrics[sourceKey]) {
+      sourceMetrics[sourceKey] = { fetchCount: 0, lastFetch: null, lastError: null, articleCount: 0 };
+    }
+    const m = sourceMetrics[sourceKey];
+    m.fetchCount++;
+    m.lastFetch = new Date().toISOString();
+    if (error) m.lastError = { message: error, time: m.lastFetch };
+    if (count !== undefined) m.articleCount = count;
+  },
+
+  getSourceMetrics: () => ({ ...sourceMetrics }),
   
   // Force refresh cache
   refresh: async (fetchFn, key) => {

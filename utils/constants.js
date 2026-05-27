@@ -3,7 +3,7 @@
  */
 module.exports = {
   APP_NAME: 'AniNewsAPI',
-  APP_VERSION: '4.0.8',
+  APP_VERSION: '4.1.0',
   APP_DESCRIPTION: 'Powerful multi-source anime news API',
   CACHE_TTL: parseInt(process.env.CACHE_TTL) || 600,
   MAX_LIMIT: 100,

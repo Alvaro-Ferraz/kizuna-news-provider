@@ -7,7 +7,7 @@ module.exports = (req, res) => {
     openapi: '3.0.3',
     info: {
       title: 'AniNewsAPI',
-      version: '4.0.8',
+      version: '4.1.0',
       description: 'Real-time anime news aggregation API with smart caching, search, RSS feeds, and full-article extraction from 7 sources.',
       contact: { name: 'Shinei Nouzen', url: 'https://github.com/Shineii86', email: 'ikx7a@hotmail.com' },
       license: { name: 'MIT', url: 'https://opensource.org/licenses/MIT' }
@@ -25,6 +25,9 @@ module.exports = (req, res) => {
             { name: 'offset', in: 'query', schema: { type: 'integer', minimum: 0, default: 0 }, description: 'Pagination offset' },
             { name: 'sort', in: 'query', schema: { type: 'string', enum: ['latest', 'oldest'], default: 'latest' }, description: 'Sort order' },
             { name: 'source', in: 'query', schema: { type: 'string', enum: ['all', 'ann', 'animecorner', 'myanimelist', 'otakuusa', 'crunchyroll', 'animeherald', 'comicbook'], default: 'all' }, description: 'Filter by source' },
+            { name: 'from', in: 'query', schema: { type: 'string', format: 'date' }, description: 'Start date filter (YYYY-MM-DD)' },
+            { name: 'to', in: 'query', schema: { type: 'string', format: 'date' }, description: 'End date filter (YYYY-MM-DD)' },
+            { name: 'cursor', in: 'query', schema: { type: 'string' }, description: 'Pagination cursor (from meta.nextCursor)' },
             { name: 'refresh', in: 'query', schema: { type: 'boolean', default: false }, description: 'Bypass cache' }
           ],
           responses: {
@@ -59,7 +62,9 @@ module.exports = (req, res) => {
             { name: 'q', in: 'query', required: true, schema: { type: 'string', minLength: 2 }, description: 'Search query' },
             { name: 'source', in: 'query', schema: { type: 'string' }, description: 'Filter by source' },
             { name: 'limit', in: 'query', schema: { type: 'integer' }, description: 'Max results' },
-            { name: 'offset', in: 'query', schema: { type: 'integer' }, description: 'Pagination offset' }
+            { name: 'offset', in: 'query', schema: { type: 'integer' }, description: 'Pagination offset' },
+            { name: 'from', in: 'query', schema: { type: 'string', format: 'date' }, description: 'Start date filter (YYYY-MM-DD)' },
+            { name: 'to', in: 'query', schema: { type: 'string', format: 'date' }, description: 'End date filter (YYYY-MM-DD)' }
           ],
           responses: { '200': { description: 'Search results with relevance scoring' }, '400': { description: 'Missing or invalid query' } }
         }
@@ -87,6 +92,13 @@ module.exports = (req, res) => {
         get: {
           summary: 'Server-Sent Events stream for new articles',
           responses: { '200': { description: 'SSE stream — events: new_article, heartbeat' } }
+        }
+      },
+      '/api/sources': {
+        get: {
+          summary: 'Per-source health and statistics',
+          description: 'Returns health status, article counts, and last fetch time for each news source.',
+          responses: { '200': { description: 'Source metrics array with health status' } }
         }
       }
     },

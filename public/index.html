@@ -1463,6 +1463,21 @@
             </div>
           </div>
         </div>
+
+        <div class="endpoint-card">
+          <div class="endpoint-header" onclick="this.parentElement.classList.toggle('open')">
+            <span class="method-badge badge-get">GET</span>
+            <span class="endpoint-path">/api/sources</span>
+            <span class="endpoint-desc">Source stats &amp; health</span>
+            <span class="endpoint-expand"><i class="fas fa-chevron-down"></i></span>
+          </div>
+          <div class="endpoint-body">
+            <p>Per-source health status, article counts, and last fetch time. Use <code>?from=YYYY-MM-DD&amp;to=YYYY-MM-DD</code> on <code>/api/news</code> for date filtering. Cursor pagination: <code>?cursor=</code> returned in <code>meta.nextCursor</code>.</p>
+            <div class="endpoint-example">
+              <span class="prompt">$</span> curl <span class="url">https://aninews.vercel.app/api/sources</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -1490,6 +1505,7 @@
             <option value="/api/rss?limit=3">/api/rss</option>
             <option value="/api/health">/api/health</option>
             <option value="/api/stats">/api/stats</option>
+            <option value="/api/sources">/api/sources</option>
           </select>
           <input id="tryit-params" class="tryit-input" placeholder="Additional params e.g. ?source=crunchyroll&limit=5">
           <button id="tryit-run" class="tryit-btn"><i class="fas fa-play"></i> Send</button>

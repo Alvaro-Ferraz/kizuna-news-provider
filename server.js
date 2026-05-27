@@ -1,4 +1,5 @@
 const express = require('express');
+const path = require('path');
 const { APP_NAME, APP_VERSION, CORS_HEADERS } = require('./utils/constants');
 
 const app = express();
@@ -7,7 +8,7 @@ const CACHE_CLEAR_KEY = process.env.CACHE_CLEAR_KEY;
 
 app.set('trust proxy', 1);
 app.use(express.json());
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'public')));
 
 // CORS
 app.use((req, res, next) => {
@@ -90,6 +91,7 @@ app.get('/api/health', require('./api/health.js'));
 app.get('/api/stats', require('./api/stats.js'));
 app.get('/api/stream', require('./api/stream.js'));
 app.get('/api/openapi', require('./api/openapi.js'));
+app.get('/api/sources', require('./api/sources.js'));
 app.post('/api/cache/clear', (req, res, next) => {
   if (CACHE_CLEAR_KEY && req.headers['x-api-key'] !== CACHE_CLEAR_KEY) {
     return res.status(401).json({ success: false, error: 'Unauthorized', message: 'Invalid or missing API key' });
@@ -105,7 +107,7 @@ app.use((req, res) => {
   } else {
     res.status(404).json({
       success: false, error: 'Not found',
-      availableEndpoints: ['GET /api/news', 'GET /api/news/tags', 'GET /api/news/:slug', 'GET /api/search?q=', 'GET /api/rss', 'GET /api/health', 'GET /api/stats', 'GET /api/stream', 'GET /api/openapi', 'POST /api/cache/clear']
+      availableEndpoints: ['GET /api/news', 'GET /api/news/tags', 'GET /api/news/:slug', 'GET /api/search?q=', 'GET /api/sources', 'GET /api/rss', 'GET /api/health', 'GET /api/stats', 'GET /api/stream', 'GET /api/openapi', 'POST /api/cache/clear']
     });
   }
 });

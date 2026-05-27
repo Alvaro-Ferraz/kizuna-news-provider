@@ -12,6 +12,8 @@ module.exports = async (req, res) => {
     const source = req.query.source?.toLowerCase() || 'all';
     const limit = Math.min(Math.max(parseInt(req.query.limit) || DEFAULT_LIMIT, 1), MAX_LIMIT);
     const offset = Math.max(parseInt(req.query.offset) || 0, 0);
+    const fromDate = req.query.from ? new Date(req.query.from) : null;
+    const toDate = req.query.to ? new Date(req.query.to) : null;
 
     if (!query || query.length < 2) {
       return res.status(400).json({
@@ -56,6 +58,14 @@ module.exports = async (req, res) => {
       return { ...article, _score: score };
     });
 
+    // Date range filtering
+    if (fromDate && !isNaN(fromDate.getTime())) results = results.filter(a => new Date(a.date) >= fromDate);
+    if (toDate && !isNaN(toDate.getTime())) {
+      const endOfDay = new Date(toDate);
+      endOfDay.setHours(23, 59, 59, 999);
+      results = results.filter(a => new Date(a.date) <= endOfDay);
+    }
+
     results.sort((a, b) => b._score !== a._score ? b._score - a._score : new Date(b.date) - new Date(a.date));
 
     const total = results.length;
@@ -67,7 +77,7 @@ module.exports = async (req, res) => {
     res.setHeader('X-Response-Time', `${responseTime}ms`);
     res.json({
       success: true, data: paginated,
-      meta: { query, total, returned: paginated.length, offset, limit, hasMore: offset + limit < total, source, responseTime: `${responseTime}ms`, timestamp: new Date().toISOString() }
+      meta: { query, total, returned: paginated.length, offset, limit, hasMore: offset + limit < total, source, ...(fromDate && { from: fromDate.toISOString().split('T')[0] }), ...(toDate && { to: toDate.toISOString().split('T')[0] }), responseTime: `${responseTime}ms`, timestamp: new Date().toISOString() }
     });
   } catch (error) {
     console.error('[Search API] Error:', error);

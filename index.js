@@ -38,6 +38,7 @@ module.exports = (req, res) => {
         'GET /api/news/tags': 'Tag listing with counts, or filter by tag',
         'GET /api/news/:slug': 'Full article content extraction',
         'GET /api/search': 'Full-text search with relevance scoring',
+        'GET /api/sources': 'Source health & stats per source',
         'GET /api/rss': 'RSS 2.0 XML feed',
         'GET /api/health': 'Health check',
         'GET /api/stats': 'Cache statistics',
