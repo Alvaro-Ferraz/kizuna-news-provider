@@ -4,6 +4,18 @@ All notable changes to **AniNewsAPI** will be documented in this file.
 
 ---
 
+## [4.1.2] - 2026-05-27
+
+### Updated
+- **README.md overhaul**: Updated to reflect all v4.1.0+ features — date range filtering, cursor pagination, source health endpoint, cache clear auth, security headers, centralized source registry
+- Fixed endpoint count from 11 to 12 (added `/api/sources`)
+- Added `CACHE_CLEAR_KEY` to configuration table
+- Added `sources.js` to project structure
+- Updated "Add a New Source" guide to reference `utils/sources.js`
+- Removed emoji from headings for cleaner rendering
+
+---
+
 ## [4.1.1] - 2026-05-27
 
 ### Fixed

@@ -4,12 +4,12 @@
 
 <div align="center">
 
-# 📰 AniNewsAPI
+# AniNewsAPI
 
 **Real-time Anime News Aggregation API**
 
 ![Vercel](https://img.shields.io/badge/Deployed%20On-Vercel-black?logo=vercel&style=flat-square)
-![Version](https://img.shields.io/badge/Version-4.1.1-89b4fa?style=flat-square&labelColor=1e1e2e)
+![Version](https://img.shields.io/badge/Version-4.1.2-89b4fa?style=flat-square&labelColor=1e1e2e)
 ![Node](https://img.shields.io/badge/Node.js-≥20-339933?logo=node.js&style=flat-square)
 ![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)
 ![Sources](https://img.shields.io/badge/Sources-7-f5c2e7?style=flat-square&labelColor=1e1e2e)
@@ -21,36 +21,36 @@
 [![Stars](https://img.shields.io/github/stars/Shineii86/AniNewsAPI?style=for-the-badge)](https://github.com/Shineii86/AniNewsAPI/stargazers)
 [![Forks](https://img.shields.io/github/forks/Shineii86/AniNewsAPI?style=for-the-badge)](https://github.com/Shineii86/AniNewsAPI/fork)
 
-> A serverless API aggregating anime news from **7 sources** in real-time — with smart caching, keyword search, RSS feeds, and full-article extraction.
+> A serverless API aggregating anime news from **7 sources** in real-time — with smart caching, keyword search, RSS feeds, date filtering, cursor pagination, and source health monitoring.
 
 <br>
 
-[🚀 Quick Start](#-quick-start) · [📡 API Docs](#-api-endpoints) · [🗞️ Sources](#️-news-sources) · [🏗️ Architecture](#️-architecture) · [🤝 Contributing](#-contributing)
+[Quick Start](#quick-start) · [API Docs](#api-endpoints) · [Sources](#news-sources) · [Architecture](#architecture) · [Contributing](#contributing)
 
 </div>
 
 ---
 
-## 📊 At a Glance
+## At a Glance
 
 <table>
 <tr>
-<td align="center" width="25%"><strong>📡 7 Sources</strong><br><sub>ANN · MAL · Crunchyroll<br>Anime Corner · Otaku USA<br>Anime Herald · Comic Book</sub></td>
-<td align="center" width="25%"><strong>⚡ 11 Endpoints</strong><br><sub>News · Search · RSS · SSE<br>Tags · Slug · Health<br>Stats · OpenAPI · Cache</sub></td>
-<td align="center" width="25%"><strong>🚀 ~200ms</strong><br><sub>Cached responses<br>10-min auto-refresh<br>Cross-source dedup</sub></td>
-<td align="center" width="25%"><strong>📰 60+ Articles</strong><br><sub>Full-text search<br>RSS 2.0 feed<br>Pagination support</sub></td>
+<td align="center" width="25%"><strong>7 Sources</strong><br><sub>ANN · MAL · Crunchyroll<br>Anime Corner · Otaku USA<br>Anime Herald · Comic Book</sub></td>
+<td align="center" width="25%"><strong>12 Endpoints</strong><br><sub>News · Search · RSS · SSE<br>Tags · Slug · Sources<br>Health · Stats · OpenAPI</sub></td>
+<td align="center" width="25%"><strong>~200ms</strong><br><sub>Cached responses<br>10-min auto-refresh<br>Cross-source dedup</sub></td>
+<td align="center" width="25%"><strong>60+ Articles</strong><br><sub>Full-text search<br>Date range filtering<br>Cursor pagination</sub></td>
 </tr>
 </table>
 
 ---
 
-## ✨ Features
+## Features
 
 <table>
 <tr>
 <td width="50%">
 
-### ⚡ Core
+### Core
 - **Real-time scraping** from 7 anime news sources
 - **Smart caching** with 10-minute TTL + disk backup
 - **Concurrent fetching** — all sources hit simultaneously
@@ -60,34 +60,36 @@
 </td>
 <td width="50%">
 
-### 🔍 Data
+### Data
 - **Keyword search** with relevance scoring (`/api/search`)
+- **Date range filtering** — `?from=YYYY-MM-DD&to=YYYY-MM-DD`
+- **Cursor pagination** — opaque `nextCursor` for efficient paging
 - **RSS 2.0 feed** for readers & integrations (`/api/rss`)
 - **Full article extraction** by slug (`/api/news/:slug`)
 - **Tag filtering** with article counts (`/api/news/tags`)
-- **Pagination** via `offset` + `limit` parameters
 
 </td>
 </tr>
 <tr>
 <td width="50%">
 
-### 🛡️ Reliability
+### Reliability
 - **RSS fallback** when web scraping is blocked
 - **Google News proxy** for Cloudflare-protected sources
 - **Cross-source deduplication** by normalized title
 - **Timeout protection** — 15s per source, never hangs
 - **CORS enabled** — works from any frontend
+- **Security headers** — CSP, X-Frame-Options, X-Content-Type-Options
 
 </td>
 <td width="50%">
 
-### 🚀 Deployment
-- **Zero-config** Vercel deployment
-- **Serverless functions** — scales automatically
-- **Express mode** — run standalone with `npm start`
-- **Environment variables** for TTL customization
-- **~50KB** total codebase, no heavy dependencies
+### Monitoring
+- **Source health** — per-source status, article count, fetch tracking (`/api/sources`)
+- **Cache statistics** — hit/miss metrics (`/api/stats`)
+- **Health check** — uptime, version, node info (`/api/health`)
+- **Cache clear auth** — API key protected (`CACHE_CLEAR_KEY` env)
+- **SSE stream** — real-time article push (`/api/stream`)
 
 </td>
 </tr>
@@ -95,7 +97,7 @@
 
 ---
 
-## 🗞️ News Sources
+## News Sources
 
 | Source | Key | Method | Articles |
 |--------|-----|--------|----------|
@@ -111,49 +113,38 @@
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 **Request Flow**
 
 | Stage | Component | Description |
 |:-----:|-----------|-------------|
 | 1 | **Client** | Browser, app, or `curl` sends request |
-| 2 | **Vercel Edge / Express** | Routes request, applies CORS + rate limit headers |
+| 2 | **Vercel Edge / Express** | Routes request, applies CORS + security headers + rate limit |
 | 3 | **Cache Check** | `node-cache` with 10-min TTL — hit = instant response |
 | 4 | **Fetch Sources** | 7 concurrent scrapers (3 retries each, 15s timeout) |
 | 5 | **Deduplicate** | Cross-source dedup by normalized title |
-| 6 | **Enrich & Respond** | Paginate, sort, format → JSON/RSS/SSE |
+| 6 | **Enrich & Respond** | Filter, paginate, sort, format → JSON/RSS/SSE |
 
 **Endpoints**
 
 | Endpoint | Method | Description |
 |----------|:------:|-------------|
-| `/api/news` | GET | Latest news with pagination, sorting, source filtering |
+| `/api/news` | GET | Latest news with pagination, sorting, source filtering, date range, cursor |
 | `/api/news/tags` | GET | Tag listing with counts, or filter by tag |
 | `/api/news/:slug` | GET | Full article content extraction |
-| `/api/search` | GET | Full-text search with relevance scoring |
+| `/api/search` | GET | Full-text search with relevance scoring + date filtering |
+| `/api/sources` | GET | Per-source health status, article counts, fetch tracking |
 | `/api/rss` | GET | RSS 2.0 XML feed |
 | `/api/health` | GET | Status, version, uptime |
 | `/api/stats` | GET | Cache hit/miss metrics |
 | `/api/stream` | GET | Server-Sent Events for real-time push |
 | `/api/openapi` | GET | OpenAPI 3.0.3 specification |
-| `/api/cache/clear` | POST | Manual cache flush |
-
-**Sources**
-
-| Source | Key | Method |
-|--------|-----|--------|
-| Anime News Network | `ann` | Google News RSS |
-| Anime Corner | `animecorner` | Direct Scrape |
-| MyAnimeList | `myanimelist` | Direct Scrape |
-| Otaku USA | `otakuusa` | Google News RSS |
-| Crunchyroll | `crunchyroll` | Google News RSS |
-| Anime Herald | `animeherald` | RSS Feed |
-| Comic Book | `comicbook` | Direct Scrape |
+| `/api/cache/clear` | POST | Manual cache flush (requires API key) |
 
 ---
 
-## 📡 API Endpoints
+## API Endpoints
 
 ### `GET /api/news`
 
@@ -163,23 +154,35 @@ Latest anime news from all or specific sources.
 |-------|------|---------|-------------|
 | `limit` | `1-100` | `20` | Max articles |
 | `offset` | `≥0` | `0` | Pagination offset |
+| `cursor` | `string` | — | Pagination cursor (from `meta.nextCursor`) |
 | `sort` | `latest\|oldest` | `latest` | Sort order |
 | `source` | `string` | `all` | Filter by source key |
+| `from` | `YYYY-MM-DD` | — | Start date filter |
+| `to` | `YYYY-MM-DD` | — | End date filter |
 | `refresh` | `boolean` | `false` | Bypass cache |
 
 ```bash
+# Basic usage
 curl "https://aninews.vercel.app/api/news?limit=10"
+
+# Filter by source with pagination
 curl "https://aninews.vercel.app/api/news?source=crunchyroll&limit=10&offset=10"
+
+# Date range filtering
+curl "https://aninews.vercel.app/api/news?from=2026-05-20&to=2026-05-27"
+
+# Cursor-based pagination (use nextCursor from previous response)
+curl "https://aninews.vercel.app/api/news?limit=20&cursor=eyJvZmZzZXQiOjIwfQ"
 ```
 
 <details>
-<summary>📄 Example Response</summary>
+<summary>Example Response</summary>
 
 ```json
 {
   "success": true,
-  "data": [{ "title": "Demon Slayer Season 4 Announced", "slug": "ann-demon-slayer-season-4-announced", "source": "Anime News Network", "excerpt": "...", "date": "2026-05-07T10:30:00.000Z", "image": "...", "link": "...", "tags": ["news", "anime"] }],
-  "meta": { "total": 62, "returned": 10, "offset": 0, "limit": 10, "hasMore": true, "source": "all", "sort": "latest", "responseTime": "234ms" }
+  "data": [{ "title": "Demon Slayer Season 4 Announced", "slug": "ann-demon-slayer-season-4-announced", "source": "Anime News Network", "excerpt": "The official website confirmed...", "date": "2026-05-27T10:30:00.000Z", "image": "...", "link": "...", "tags": ["news", "anime"] }],
+  "meta": { "total": 62, "returned": 10, "offset": 0, "limit": 10, "hasMore": true, "nextCursor": "eyJvZmZzZXQiOjEwfQ", "source": "all", "sort": "latest", "from": "2026-05-20", "to": "2026-05-27", "responseTime": "234ms" }
 }
 ```
 </details>
@@ -192,15 +195,43 @@ Full-text search with relevance scoring. Title matches rank higher than excerpt 
 
 | Param | Required | Description |
 |-------|----------|-------------|
-| `q` | ✅ | Search query (min 2 chars) |
-| `source` | ❌ | Filter by source |
-| `limit` | ❌ | Max results |
-| `offset` | ❌ | Pagination |
+| `q` | Yes | Search query (min 2 chars) |
+| `source` | No | Filter by source |
+| `limit` | No | Max results |
+| `offset` | No | Pagination |
+| `from` | No | Start date (YYYY-MM-DD) |
+| `to` | No | End date (YYYY-MM-DD) |
 
 ```bash
 curl "https://aninews.vercel.app/api/search?q=demon+slayer"
 curl "https://aninews.vercel.app/api/search?q=manga&source=ann&limit=5"
+curl "https://aninews.vercel.app/api/search?q=crunchyroll&from=2026-05-20&to=2026-05-27"
 ```
+
+---
+
+### `GET /api/sources`
+
+Per-source health monitoring. Returns fetch status, article counts, and last fetch time for each news source.
+
+```bash
+curl "https://aninews.vercel.app/api/sources"
+```
+
+<details>
+<summary>Example Response</summary>
+
+```json
+{
+  "success": true,
+  "data": [
+    { "key": "ann", "name": "Anime News Network", "fetchCount": 5, "lastFetch": "2026-05-27T12:00:00.000Z", "articleCount": 15, "lastError": null, "status": "healthy" },
+    { "key": "myanimelist", "name": "MyAnimeList", "fetchCount": 3, "lastFetch": "2026-05-27T11:55:00.000Z", "articleCount": 15, "lastError": null, "status": "healthy" }
+  ],
+  "meta": { "total": 7, "healthy": 7, "degraded": 0, "responseTime": "2ms" }
+}
+```
+</details>
 
 ---
 
@@ -245,6 +276,12 @@ curl "https://aninews.vercel.app/api/rss?source=crunchyroll&limit=10"
 
 Health check, cache statistics, and manual cache flush.
 
+The cache clear endpoint requires an API key when `CACHE_CLEAR_KEY` is set:
+
+```bash
+curl -X POST "https://aninews.vercel.app/api/cache/clear" -H "X-Api-Key: your-secret-key"
+```
+
 ---
 
 ### `GET /api/stream`
@@ -267,7 +304,7 @@ curl "https://aninews.vercel.app/api/openapi"
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Deploy to Vercel
 
@@ -283,16 +320,17 @@ cd AniNewsAPI && npm install && npm run dev
 
 ---
 
-## 🔧 Configuration
+## Configuration
 
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `CACHE_TTL` | `600` | Cache duration in seconds |
 | `PORT` | `3000` | Server port (Express mode) |
+| `CACHE_CLEAR_KEY` | — | API key for `POST /api/cache/clear` (optional) |
 
 ---
 
-## 📊 Performance
+## Performance
 
 | Metric | Value |
 |--------|-------|
@@ -305,11 +343,11 @@ cd AniNewsAPI && npm install && npm run dev
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 | Layer | Technology |
 |-------|------------|
-| **Runtime** | Node.js ≥ 20 |
+| **Runtime** | Node.js >= 20 |
 | **HTTP** | Express 5 / Vercel Functions |
 | **Scraping** | Cheerio + Axios |
 | **RSS** | rss-parser |
@@ -317,53 +355,56 @@ cd AniNewsAPI && npm install && npm run dev
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 AniNewsAPI/
 ├── api/                    # Vercel serverless functions
-│   ├── cache/clear.js      # Cache management
+│   ├── cache/clear.js      # Cache management (API key protected)
 │   ├── health.js           # Health check
-│   ├── news.js             # Main news endpoint
+│   ├── news.js             # Main news endpoint (date filter, cursor)
 │   ├── news/{slug}.js      # Article by slug
 │   ├── news/tags.js        # Tag filtering
 │   ├── rss.js              # RSS feed
-│   ├── search.js           # Keyword search
+│   ├── search.js           # Keyword search (date filter)
+│   ├── sources.js          # Per-source health & stats
 │   ├── stats.js            # Cache statistics
 │   ├── stream.js           # SSE real-time feed
 │   └── openapi.js          # OpenAPI 3.0 spec
 ├── utils/                  # Core logic
-│   ├── cacheHandler.js     # Memory + disk cache
+│   ├── cacheHandler.js     # Memory + disk cache + source tracking
 │   ├── constants.js        # Shared config
 │   ├── contentParser.js    # Article extraction
 │   ├── dateParser.js       # Multi-format date parsing
 │   ├── fetch*.js           # Source scrapers (7 files)
-│   └── generateSlug.js     # URL-safe slug generator
-├── public/index.html       # Landing page (v4.0)
+│   ├── generateSlug.js     # URL-safe slug generator
+│   └── sources.js          # Centralized source registry
+├── public/index.html       # Landing page
 ├── server.js               # Express server entry
+├── test.js                 # Test suite
 ├── vercel.json             # Vercel routing config
 └── CHANGELOG.md
 ```
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 ### Add a New Source
 
 1. Create `utils/fetchNewSource.js` — export async function returning `[{ title, slug, source, excerpt, date, image, link, tags }]`
-2. Register in `api/news.js` → `SOURCES` object
+2. Register in `utils/sources.js` → `SOURCES` object
 3. Test with `npm test`, submit a PR
 
 ---
 
-## 📄 License
+## License
 
 [MIT](LICENSE) © [Shinei Nouzen](https://github.com/Shineii86)
 
 ---
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 | Source | About |
 |--------|-------|
@@ -379,7 +420,7 @@ AniNewsAPI/
 
 <div align="center">
 
-**Built with ❤️ for the anime community**
+**Built with care for the anime community**
 
 [![Telegram](https://img.shields.io/badge/-Telegram-2CA5E0?style=flat&logo=Telegram&logoColor=white)](https://telegram.me/Shineii86)
 [![GitHub](https://img.shields.io/badge/-GitHub-181717?style=flat&logo=github&logoColor=white)](https://github.com/Shineii86)
