@@ -4,7 +4,7 @@
 
 <div align="center">
 
-# AniNewsAPI
+# 📰 AniNewsAPI
 
 **Real-time Anime News Aggregation API**
 
@@ -25,32 +25,32 @@
 
 <br>
 
-[Quick Start](#quick-start) · [API Docs](#api-endpoints) · [Sources](#news-sources) · [Architecture](#architecture) · [Contributing](#contributing)
+[🚀 Quick Start](#-quick-start) · [📡 API Docs](#-api-endpoints) · [🗞️ Sources](#️-news-sources) · [🏗️ Architecture](#️-architecture) · [🤝 Contributing](#-contributing)
 
 </div>
 
 ---
 
-## At a Glance
+## 📊 At a Glance
 
 <table>
 <tr>
-<td align="center" width="25%"><strong>7 Sources</strong><br><sub>ANN · MAL · Crunchyroll<br>Anime Corner · Otaku USA<br>Anime Herald · Comic Book</sub></td>
-<td align="center" width="25%"><strong>12 Endpoints</strong><br><sub>News · Search · RSS · SSE<br>Tags · Slug · Sources<br>Health · Stats · OpenAPI</sub></td>
-<td align="center" width="25%"><strong>~200ms</strong><br><sub>Cached responses<br>10-min auto-refresh<br>Cross-source dedup</sub></td>
-<td align="center" width="25%"><strong>60+ Articles</strong><br><sub>Full-text search<br>Date range filtering<br>Cursor pagination</sub></td>
+<td align="center" width="25%"><strong>📡 7 Sources</strong><br><sub>ANN · MAL · Crunchyroll<br>Anime Corner · Otaku USA<br>Anime Herald · Comic Book</sub></td>
+<td align="center" width="25%"><strong>⚡ 12 Endpoints</strong><br><sub>News · Search · RSS · SSE<br>Tags · Slug · Sources<br>Health · Stats · OpenAPI</sub></td>
+<td align="center" width="25%"><strong>🚀 ~200ms</strong><br><sub>Cached responses<br>10-min auto-refresh<br>Cross-source dedup</sub></td>
+<td align="center" width="25%"><strong>📰 60+ Articles</strong><br><sub>Full-text search<br>Date range filtering<br>Cursor pagination</sub></td>
 </tr>
 </table>
 
 ---
 
-## Features
+## ✨ Features
 
 <table>
 <tr>
 <td width="50%">
 
-### Core
+### ⚡ Core
 - **Real-time scraping** from 7 anime news sources
 - **Smart caching** with 10-minute TTL + disk backup
 - **Concurrent fetching** — all sources hit simultaneously
@@ -60,7 +60,7 @@
 </td>
 <td width="50%">
 
-### Data
+### 🔍 Data
 - **Keyword search** with relevance scoring (`/api/search`)
 - **Date range filtering** — `?from=YYYY-MM-DD&to=YYYY-MM-DD`
 - **Cursor pagination** — opaque `nextCursor` for efficient paging
@@ -73,7 +73,7 @@
 <tr>
 <td width="50%">
 
-### Reliability
+### 🛡️ Reliability
 - **RSS fallback** when web scraping is blocked
 - **Google News proxy** for Cloudflare-protected sources
 - **Cross-source deduplication** by normalized title
@@ -84,7 +84,7 @@
 </td>
 <td width="50%">
 
-### Monitoring
+### 📊 Monitoring
 - **Source health** — per-source status, article count, fetch tracking (`/api/sources`)
 - **Cache statistics** — hit/miss metrics (`/api/stats`)
 - **Health check** — uptime, version, node info (`/api/health`)
@@ -93,11 +93,26 @@
 
 </td>
 </tr>
+<tr>
+<td width="50%">
+
+### 🚀 Deployment
+- **Zero-config** Vercel deployment
+- **Serverless functions** — scales automatically
+- **Express mode** — run standalone with `npm start`
+- **Environment variables** for TTL customization
+- **~50KB** total codebase, no heavy dependencies
+
+</td>
+<td width="50%">
+
+</td>
+</tr>
 </table>
 
 ---
 
-## News Sources
+## 🗞️ News Sources
 
 | Source | Key | Method | Articles |
 |--------|-----|--------|----------|
@@ -113,7 +128,7 @@
 
 ---
 
-## Architecture
+## 🏗️ Architecture
 
 **Request Flow**
 
@@ -144,7 +159,7 @@
 
 ---
 
-## API Endpoints
+## 📡 API Endpoints
 
 ### `GET /api/news`
 
@@ -176,7 +191,7 @@ curl "https://aninews.vercel.app/api/news?limit=20&cursor=eyJvZmZzZXQiOjIwfQ"
 ```
 
 <details>
-<summary>Example Response</summary>
+<summary>📄 Example Response</summary>
 
 ```json
 {
@@ -219,7 +234,7 @@ curl "https://aninews.vercel.app/api/sources"
 ```
 
 <details>
-<summary>Example Response</summary>
+<summary>📄 Example Response</summary>
 
 ```json
 {
@@ -304,7 +319,7 @@ curl "https://aninews.vercel.app/api/openapi"
 
 ---
 
-## Quick Start
+## 🚀 Quick Start
 
 ### Deploy to Vercel
 
@@ -320,7 +335,7 @@ cd AniNewsAPI && npm install && npm run dev
 
 ---
 
-## Configuration
+## 🔧 Configuration
 
 | Variable | Default | Description |
 |----------|---------|-------------|
@@ -330,7 +345,7 @@ cd AniNewsAPI && npm install && npm run dev
 
 ---
 
-## Performance
+## 📊 Performance
 
 | Metric | Value |
 |--------|-------|
@@ -343,7 +358,7 @@ cd AniNewsAPI && npm install && npm run dev
 
 ---
 
-## Tech Stack
+## 🛠️ Tech Stack
 
 | Layer | Technology |
 |-------|------------|
@@ -355,7 +370,7 @@ cd AniNewsAPI && npm install && npm run dev
 
 ---
 
-## Project Structure
+## 📁 Project Structure
 
 ```
 AniNewsAPI/
@@ -388,7 +403,7 @@ AniNewsAPI/
 
 ---
 
-## Contributing
+## 🤝 Contributing
 
 ### Add a New Source
 
@@ -398,13 +413,13 @@ AniNewsAPI/
 
 ---
 
-## License
+## 📄 License
 
 [MIT](LICENSE) © [Shinei Nouzen](https://github.com/Shineii86)
 
 ---
 
-## Acknowledgments
+## 🙏 Acknowledgments
 
 | Source | About |
 |--------|-------|
@@ -420,7 +435,7 @@ AniNewsAPI/
 
 <div align="center">
 
-**Built with care for the anime community**
+**Built with ❤️ for the anime community**
 
 [![Telegram](https://img.shields.io/badge/-Telegram-2CA5E0?style=flat&logo=Telegram&logoColor=white)](https://telegram.me/Shineii86)
 [![GitHub](https://img.shields.io/badge/-GitHub-181717?style=flat&logo=github&logoColor=white)](https://github.com/Shineii86)
