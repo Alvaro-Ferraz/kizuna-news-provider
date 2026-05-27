@@ -4,6 +4,13 @@ All notable changes to **AniNewsAPI** will be documented in this file.
 
 ---
 
+## [4.2.1] - 2026-05-28
+
+### Changed
+- **README.md overhaul**: Upgraded to WaifuWiki-style comprehensive documentation — added Table of Contents, detailed Overview with ASCII architecture diagram, Feature Highlights table, News Sources with fetch strategies, full API reference with collapsible examples, API Response Schema, Caching Architecture diagram, Source Fetch Strategy table, Troubleshooting table, FAQ (8 collapsible entries), Roadmap, Contributing guide, Star History, and Author section
+
+---
+
 ## [4.2.0] - 2026-05-28
 
 ### Changed
