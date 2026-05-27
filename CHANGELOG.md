@@ -4,6 +4,13 @@ All notable changes to **AniNewsAPI** will be documented in this file.
 
 ---
 
+## [4.1.4] - 2026-05-27
+
+### Fixed
+- **Sources endpoint live health checks**: Rewrote `/api/sources` to perform real-time fetches against each source instead of relying on in-memory metrics that don't persist across Vercel serverless function boundaries. Now returns actual article counts, latency, and health status per source
+
+---
+
 ## [4.1.3] - 2026-05-27
 
 ### Fixed

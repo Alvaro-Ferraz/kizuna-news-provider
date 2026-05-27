@@ -7,25 +7,59 @@ module.exports = async (req, res) => {
   Object.entries(CORS_HEADERS).forEach(([k, v]) => res.setHeader(k, v));
   if (req.method === 'OPTIONS') { res.status(204).end(); return; }
 
-  const metrics = cacheHandler.getSourceMetrics();
+  // Check disk metrics (persists within same function instance)
+  const diskMetrics = cacheHandler.getSourceMetrics();
+  const hasDiskData = Object.keys(diskMetrics).length > 0;
 
-  const sources = SOURCE_KEYS.map(key => {
-    const config = SOURCES[key];
-    const metric = metrics[key] || {};
-    return {
-      key,
-      name: config.name,
-      fetchCount: metric.fetchCount || 0,
-      lastFetch: metric.lastFetch || null,
-      articleCount: metric.articleCount || 0,
-      lastError: metric.lastError || null,
-      status: metric.lastError ? 'degraded' : (metric.lastFetch ? 'healthy' : 'unknown')
-    };
+  // Run lightweight health checks for each source in parallel
+  const results = await Promise.allSettled(
+    SOURCE_KEYS.map(async key => {
+      const config = SOURCES[key];
+      const metric = diskMetrics[key] || {};
+      const fetchStart = Date.now();
+
+      try {
+        const articles = await config.fetch();
+        const latency = Date.now() - fetchStart;
+        cacheHandler.trackSource(key, { count: articles.length });
+        return {
+          key,
+          name: config.name,
+          status: 'healthy',
+          articleCount: articles.length,
+          latency: `${latency}ms`,
+          lastFetch: new Date().toISOString(),
+          lastError: null
+        };
+      } catch (error) {
+        const latency = Date.now() - fetchStart;
+        cacheHandler.trackSource(key, { error: error.message });
+        return {
+          key,
+          name: config.name,
+          status: 'degraded',
+          articleCount: metric.articleCount || 0,
+          latency: `${latency}ms`,
+          lastFetch: metric.lastFetch || null,
+          lastError: { message: error.message, time: new Date().toISOString() }
+        };
+      }
+    })
+  );
+
+  const sources = results.map(r => r.status === 'fulfilled' ? r.value : {
+    key: 'unknown',
+    name: 'Unknown',
+    status: 'error',
+    articleCount: 0,
+    latency: '0ms',
+    lastFetch: null,
+    lastError: { message: r.reason?.message || 'Unknown error', time: new Date().toISOString() }
   });
 
   const responseTime = Date.now() - startTime;
   res.setHeader('Content-Type', 'application/json');
-  res.setHeader('Cache-Control', 'public, max-age=60');
+  res.setHeader('Cache-Control', 'public, max-age=120');
   res.setHeader('X-Response-Time', `${responseTime}ms`);
   res.json({
     success: true,
