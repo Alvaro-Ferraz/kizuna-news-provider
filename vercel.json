@@ -9,8 +9,7 @@
       { "key": "Access-Control-Allow-Methods", "value": "GET, POST, OPTIONS" },
       { "key": "Access-Control-Allow-Headers", "value": "Content-Type" },
       { "key": "Cache-Control", "value": "public, s-maxage=300" },
-      { "key": "X-RateLimit-Limit", "value": "100" },
-      { "key": "X-RateLimit-Remaining", "value": "99" }
+      { "key": "X-RateLimit-Limit", "value": "100" }
     ]},
     { "source": "/", "headers": [
       { "key": "Access-Control-Allow-Origin", "value": "*" },

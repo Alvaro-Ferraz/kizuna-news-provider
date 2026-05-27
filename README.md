@@ -9,8 +9,8 @@
 **Real-time Anime News Aggregation API**
 
 ![Vercel](https://img.shields.io/badge/Deployed%20On-Vercel-black?logo=vercel&style=flat-square)
-![Version](https://img.shields.io/badge/Version-4.0.0-89b4fa?style=flat-square&labelColor=1e1e2e)
-![Node](https://img.shields.io/badge/Node.js-≥18-339933?logo=node.js&style=flat-square)
+![Version](https://img.shields.io/badge/Version-4.0.8-89b4fa?style=flat-square&labelColor=1e1e2e)
+![Node](https://img.shields.io/badge/Node.js-≥20-339933?logo=node.js&style=flat-square)
 ![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)
 ![Sources](https://img.shields.io/badge/Sources-7-f5c2e7?style=flat-square&labelColor=1e1e2e)
 ![Status](https://img.shields.io/badge/API-Stable-a6e3a1?style=flat-square&labelColor=1e1e2e)
@@ -309,7 +309,7 @@ cd AniNewsAPI && npm install && npm run dev
 
 | Layer | Technology |
 |-------|------------|
-| **Runtime** | Node.js ≥ 18 |
+| **Runtime** | Node.js ≥ 20 |
 | **HTTP** | Express 5 / Vercel Functions |
 | **Scraping** | Cheerio + Axios |
 | **RSS** | rss-parser |

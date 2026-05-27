@@ -1,5 +1,6 @@
 User-agent: *
 Allow: /
+Allow: /api/openapi
 Disallow: /api/
 
 Sitemap: https://aninews.vercel.app/sitemap.xml

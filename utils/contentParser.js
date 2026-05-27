@@ -1,6 +1,7 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
 const he = require('he');
+const { USER_AGENT, CONTENT_TIMEOUT } = require('./constants');
 
 /**
  * Content extraction for full article reading
@@ -12,11 +13,11 @@ module.exports = {
       
       const { data } = await axios.get(url, {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+          'User-Agent': USER_AGENT,
           'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
           'Accept-Language': 'en-US,en;q=0.9'
         },
-        timeout: 20000,
+        timeout: CONTENT_TIMEOUT,
         maxRedirects: 5
       });
       

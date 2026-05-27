@@ -1,22 +1,6 @@
 const cacheHandler = require('../utils/cacheHandler');
-const fetchANN = require('../utils/fetchANN');
-const fetchAnimeCorner = require('../utils/fetchAnimeCorner');
-const fetchMyAnimeList = require('../utils/fetchMyAnimeList');
-const fetchOtakuNews = require('../utils/fetchOtakuNews');
-const fetchCrunchyroll = require('../utils/fetchCrunchyroll');
-const fetchAnimeHerald = require('../utils/fetchAnimeHerald');
-const fetchComicBook = require('../utils/fetchComicBook');
 const { APP_NAME, APP_VERSION, CORS_HEADERS, MAX_LIMIT, DEFAULT_LIMIT } = require('../utils/constants');
-
-const SOURCES = {
-  ann: { name: 'Anime News Network', fetch: fetchANN },
-  animecorner: { name: 'Anime Corner', fetch: fetchAnimeCorner },
-  myanimelist: { name: 'MyAnimeList', fetch: fetchMyAnimeList },
-  otakuusa: { name: 'Otaku USA Magazine', fetch: fetchOtakuNews },
-  crunchyroll: { name: 'Crunchyroll', fetch: fetchCrunchyroll },
-  animeherald: { name: 'Anime Herald', fetch: fetchAnimeHerald },
-  comicbook: { name: 'Comic Book', fetch: fetchComicBook }
-};
+const { SOURCES } = require('../utils/sources');
 
 function escapeXml(str) {
   if (!str) return '';

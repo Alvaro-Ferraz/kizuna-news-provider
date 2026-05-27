@@ -1,24 +1,6 @@
 const cacheHandler = require('../utils/cacheHandler');
-const fetchANN = require('../utils/fetchANN');
-const fetchAnimeCorner = require('../utils/fetchAnimeCorner');
-const fetchMyAnimeList = require('../utils/fetchMyAnimeList');
-const fetchOtakuNews = require('../utils/fetchOtakuNews');
-const fetchCrunchyroll = require('../utils/fetchCrunchyroll');
-const fetchAnimeHerald = require('../utils/fetchAnimeHerald');
-const fetchComicBook = require('../utils/fetchComicBook');
 const { CORS_HEADERS, MAX_LIMIT, DEFAULT_LIMIT, DEFAULT_SORT } = require('../utils/constants');
-
-const SOURCES = {
-  all: { name: 'All Sources', fetch: null },
-  ann: { name: 'Anime News Network', fetch: fetchANN },
-  animecorner: { name: 'Anime Corner', fetch: fetchAnimeCorner },
-  myanimelist: { name: 'MyAnimeList', fetch: fetchMyAnimeList },
-  otakuusa: { name: 'Otaku USA Magazine', fetch: fetchOtakuNews },
-  crunchyroll: { name: 'Crunchyroll', fetch: fetchCrunchyroll },
-  animeherald: { name: 'Anime Herald', fetch: fetchAnimeHerald },
-  comicbook: { name: 'Comic Book', fetch: fetchComicBook }
-};
-const SOURCE_KEYS = Object.keys(SOURCES);
+const { SOURCES, SOURCE_KEYS } = require('../utils/sources');
 
 function deduplicateArticles(articles) {
   const seen = new Map();
@@ -42,8 +24,8 @@ module.exports = async (req, res) => {
     const source = req.query.source?.toLowerCase() || 'all';
     const forceRefresh = req.query.refresh === 'true';
 
-    if (!SOURCE_KEYS.includes(source)) {
-      return res.status(400).json({ success: false, error: 'Invalid source parameter', message: `Available sources: ${SOURCE_KEYS.join(', ')}`, timestamp: new Date().toISOString() });
+    if (source !== 'all' && !SOURCE_KEYS.includes(source)) {
+      return res.status(400).json({ success: false, error: 'Invalid source parameter', message: `Available sources: all, ${SOURCE_KEYS.join(', ')}`, timestamp: new Date().toISOString() });
     }
 
     const cacheKey = `news_${source}`;

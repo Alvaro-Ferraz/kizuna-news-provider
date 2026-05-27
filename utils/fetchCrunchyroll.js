@@ -2,6 +2,7 @@ const axios = require('axios');
 const cheerio = require('cheerio');
 const generateSlug = require('./generateSlug');
 const dateParser = require('./dateParser');
+const { USER_AGENT, REQUEST_TIMEOUT } = require('./constants');
 const RSSParser = require('rss-parser');
 const rssParser = new RSSParser();
 
@@ -34,7 +35,7 @@ async function fetchFromWeb(urlIndex = 0) {
   try {
     const url = CR_URLS[urlIndex];
     console.log(`[Crunchyroll] Fetching from web (${url})...`);
-    const { data } = await axios.get(url, { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36' }, timeout: 15000 });
+    const { data } = await axios.get(url, { headers: { 'User-Agent': USER_AGENT }, timeout: REQUEST_TIMEOUT });
     const $ = cheerio.load(data);
     const articles = [];
     for (const selector of ['.news-item', 'article', '.article-card', '[class*="news"]']) {

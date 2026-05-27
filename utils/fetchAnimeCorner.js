@@ -2,6 +2,7 @@ const axios = require('axios');
 const cheerio = require('cheerio');
 const generateSlug = require('./generateSlug');
 const dateParser = require('./dateParser');
+const { USER_AGENT, REQUEST_TIMEOUT } = require('./constants');
 
 const RSSParser = require('rss-parser');
 const rssParser = new RSSParser();
@@ -18,11 +19,11 @@ async function fetchFromWeb() {
     
     const { data } = await axios.get(AC_URL, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+        'User-Agent': USER_AGENT,
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
         'Accept-Language': 'en-US,en;q=0.9'
       },
-      timeout: 15000
+      timeout: REQUEST_TIMEOUT
     });
     
     const $ = cheerio.load(data);

@@ -2,6 +2,7 @@ const axios = require('axios');
 const cheerio = require('cheerio');
 const generateSlug = require('./generateSlug');
 const dateParser = require('./dateParser');
+const { USER_AGENT, REQUEST_TIMEOUT } = require('./constants');
 
 const MAL_URL = 'https://myanimelist.net/news';
 
@@ -13,13 +14,13 @@ async function fetchFromWeb() {
     console.log('[MAL] Fetching from web...');
     
     const { data } = await axios.get(MAL_URL, {
-      headers: { 
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+      headers: {
+        'User-Agent': USER_AGENT,
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
         'Accept-Language': 'en-US,en;q=0.9',
-        'Cookie': 'mqlid=1; is_logged_in=0' // Minimal cookies
+        'Cookie': 'mqlid=1; is_logged_in=0'
       },
-      timeout: 15000
+      timeout: REQUEST_TIMEOUT
     });
     
     const $ = cheerio.load(data);
@@ -104,10 +105,8 @@ async function fetchFromPage2() {
     console.log('[MAL] Fetching from page 2...');
     
     const { data } = await axios.get(`${MAL_URL}?p=2`, {
-      headers: { 
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-      },
-      timeout: 15000
+      headers: { 'User-Agent': USER_AGENT },
+      timeout: REQUEST_TIMEOUT
     });
     
     const $ = cheerio.load(data);

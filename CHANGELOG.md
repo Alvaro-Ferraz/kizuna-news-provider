@@ -4,6 +4,30 @@ All notable changes to **AniNewsAPI** will be documented in this file.
 
 ---
 
+## [4.0.8] - 2026-05-27
+
+### Fixed
+- **Version drift**: Synced `APP_VERSION` in `constants.js`, `package.json`, `openapi.js`, and `README.md` badges to `4.0.8`
+- **`vercel.json` misleading headers**: Removed hardcoded `X-RateLimit-Remaining: 99` that always showed 99 regardless of actual usage
+- **Rate limiter broken behind proxy**: Added `trust proxy` setting so `req.ip` returns the real client IP behind Vercel/CDN
+- **Dead route removed**: Removed redundant `app.get('/')` handler in `server.js` — `express.static('public')` already serves the landing page
+- **README Node.js badge**: Fixed badge from `>=18` to `>=20` to match `package.json` engines field
+- **README version badge**: Updated from `4.0.0` to `4.0.8`
+- **Sitemap `lastmod`**: Updated from stale `2026-05-08` to `2026-05-27`
+
+### Added
+- **Centralized source registry**: Created `utils/sources.js` — single source of truth for all 7 news source definitions, eliminating triple duplication across `api/news.js`, `api/search.js`, `api/rss.js`
+- **Cache clear authentication**: `POST /api/cache/clear` now requires `X-Api-Key` header when `CACHE_CLEAR_KEY` env var is set — prevents unauthorized cache flushing
+- **Security headers**: Added `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy` to all API responses
+- **Content-Security-Policy**: Added CSP meta tag to landing page restricting resources to trusted domains
+- **OpenAPI in robots.txt**: Allowed `/api/openapi` path so API spec is discoverable by crawlers
+
+### Improved
+- **Shared constants in fetchers**: All 7 fetcher modules and `contentParser.js` now use `USER_AGENT` and `REQUEST_TIMEOUT`/`CONTENT_TIMEOUT` from `constants.js` instead of hardcoded strings
+- **Health endpoint**: Removed `process.memoryUsage()` leak — no longer exposes internal memory details to API consumers
+
+---
+
 ## [4.0.7] - 2026-05-08
 
 ### Added

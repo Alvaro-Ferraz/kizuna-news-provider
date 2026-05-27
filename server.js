@@ -1,10 +1,11 @@
 const express = require('express');
-const path = require('path');
 const { APP_NAME, APP_VERSION, CORS_HEADERS } = require('./utils/constants');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const CACHE_CLEAR_KEY = process.env.CACHE_CLEAR_KEY;
 
+app.set('trust proxy', 1);
 app.use(express.json());
 app.use(express.static('public'));
 
@@ -12,6 +13,14 @@ app.use(express.static('public'));
 app.use((req, res, next) => {
   Object.entries(CORS_HEADERS).forEach(([k, v]) => res.setHeader(k, v));
   if (req.method === 'OPTIONS') { res.status(204).end(); return; }
+  next();
+});
+
+// ── Security headers ──
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   next();
 });
 
@@ -81,10 +90,12 @@ app.get('/api/health', require('./api/health.js'));
 app.get('/api/stats', require('./api/stats.js'));
 app.get('/api/stream', require('./api/stream.js'));
 app.get('/api/openapi', require('./api/openapi.js'));
-app.post('/api/cache/clear', require('./api/cache/clear.js'));
-
-// Landing page
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+app.post('/api/cache/clear', (req, res, next) => {
+  if (CACHE_CLEAR_KEY && req.headers['x-api-key'] !== CACHE_CLEAR_KEY) {
+    return res.status(401).json({ success: false, error: 'Unauthorized', message: 'Invalid or missing API key' });
+  }
+  next();
+}, require('./api/cache/clear.js'));
 
 // 404
 app.use((req, res) => {
