@@ -4,6 +4,16 @@ All notable changes to **AniNewsAPI** will be documented in this file.
 
 ---
 
+## [4.1.5] - 2026-05-27
+
+### Fixed
+- **Comic Book excerpts now real descriptions**: Added `.wp-block-savage-platform-post-subheadline` selector — articles now show actual descriptions like "The studio behind Solo Leveling..." instead of just the title
+- **Anime Corner excerpts**: Switched to RSS-first (has `contentSnippet` with real descriptions) instead of web scraping which lacked excerpts
+- **Anime Herald excerpts**: Same RSS-first fix — articles now show real interview/preview text instead of title fallback
+- **Comic Book selectors**: Added `.wp-block-wp-curate-post-title a` and `.wp-block-post` for better element matching
+
+---
+
 ## [4.1.4] - 2026-05-27
 
 ### Fixed

@@ -48,8 +48,8 @@ async function fetchFromWeb() {
         const title = $el.find('h2.entry-title a, h3 a, .entry-title a, h2 a').first().text().trim();
         if (!title) return;
         
-        // Extract excerpt
-        const excerpt = $el.find('.entry-excerpt, .entry-summary, .excerpt').first().text().trim();
+        // Extract excerpt — Anime Corner uses .item-content.entry-content for descriptions
+        const excerpt = $el.find('.item-content.entry-content, .entry-excerpt, .entry-summary').first().text().trim();
         
         // Extract date
         const dateAttr = $el.find('time').attr('datetime');
@@ -150,10 +150,11 @@ async function fetchFromRSS() {
 module.exports = async (retries = 2) => {
   for (let i = 0; i <= retries; i++) {
     try {
-      let articles = await fetchFromWeb();
-      
+      // Prefer RSS — has real descriptions; web scraping lacks excerpts
+      let articles = await fetchFromRSS();
+
       if (articles.length === 0) {
-        articles = await fetchFromRSS();
+        articles = await fetchFromWeb();
       }
       
       if (articles.length > 0) {

@@ -29,11 +29,11 @@ async function fetchFromWeb() {
     const $ = cheerio.load(data);
     const articles = [];
     
-    // Try multiple selectors
+    // Selectors for article cards (most specific first)
     const selectors = [
+      '.wp-block-post',
       'article',
       '.article-card',
-      '.news-item',
       '.post'
     ];
     
@@ -44,11 +44,11 @@ async function fetchFromWeb() {
         const $el = $(el);
         
         // Extract title
-        const title = $el.find('h2 a, h3 a, .title a, .headline a').first().text().trim();
+        const title = $el.find('h2 a, h3 a, .wp-block-wp-curate-post-title a, .title a, .headline a').first().text().trim();
         if (!title) return;
-        
-        // Extract excerpt
-        const excerpt = $el.find('.excerpt, .summary').first().text().trim();
+
+        // Extract excerpt — Comic Book uses subheadline for descriptions
+        const excerpt = $el.find('.wp-block-savage-platform-post-subheadline, .excerpt, .summary').first().text().trim();
         
         // Extract date
         const dateAttr = $el.find('time').attr('datetime');
@@ -61,7 +61,7 @@ async function fetchFromWeb() {
         if (image.startsWith('//')) image = `https:${image}`;
         
         // Extract link
-        const link = $el.find('h2 a, h3 a, .title a, .headline a').first().attr('href') || '';
+        const link = $el.find('h2 a, h3 a, .wp-block-wp-curate-post-title a, .title a, .headline a').first().attr('href') || '';
         
         // Extract tags
         const tags = [];

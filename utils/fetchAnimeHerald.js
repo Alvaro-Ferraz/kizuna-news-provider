@@ -149,10 +149,11 @@ async function fetchFromRSS() {
 module.exports = async (retries = 2) => {
   for (let i = 0; i <= retries; i++) {
     try {
-      let articles = await fetchFromWeb();
-      
+      // Prefer RSS — has real descriptions; web scraping lacks excerpts
+      let articles = await fetchFromRSS();
+
       if (articles.length === 0) {
-        articles = await fetchFromRSS();
+        articles = await fetchFromWeb();
       }
       
       if (articles.length > 0) {
