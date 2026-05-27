@@ -1,22 +1,59 @@
+/*
+ * ======= • ======= • ======= • ======= • =======• =======
+ * AniNewsAPI — fetchComicBook.js
+ * Repository: https://github.com/Shineii86/AniNewsAPI
+ *
+ * @description
+ *   News fetcher for Comic Book (comicbook.com). Uses web
+ *   scraping as primary with RSS feed as fallback. Returns
+ *   up to 10 articles.
+ *
+ * @exports fetchComicBook(retries)
+ *
+ * @version 4.1.6
+ * @author  Shinei Nouzen
+ * @license MIT
+ * ======= • ======= • ======= • ======= • =======• =======
+ */
+
 const axios = require('axios');
 const cheerio = require('cheerio');
 const generateSlug = require('./generateSlug');
 const dateParser = require('./dateParser');
 const { USER_AGENT, REQUEST_TIMEOUT } = require('./constants');
-
 const RSSParser = require('rss-parser');
 const rssParser = new RSSParser();
 
+// ══════════════════════════════════════════════════════════════
+// SOURCE URLS
+// ══════════════════════════════════════════════════════════════
+
+// ---- FEATURE: Comic Book source URLs ----
+
+/** @type {string} Direct anime section URL */
 const CB_URL = 'https://comicbook.com/anime/';
+
+/** @type {string} RSS feed URL */
 const CB_RSS = 'https://comicbook.com/anime/feed/';
 
+// ══════════════════════════════════════════════════════════════
+// FETCHERS
+// ══════════════════════════════════════════════════════════════
+
+// ---- FEATURE: Web scraping fetcher ----
+
 /**
- * Fetch news from Comic Book website
+ * Fetch Comic Book articles by scraping the anime section.
+ *
+ * NOTE: Comic Book uses `.wp-block-savage-platform-post-subheadline`
+ *       for article descriptions (not generic .excerpt).
+ *
+ * @returns {Promise<Array>} Array of article objects
  */
 async function fetchFromWeb() {
   try {
     console.log('[ComicBook] Fetching from web...');
-    
+
     const { data } = await axios.get(CB_URL, {
       headers: {
         'User-Agent': USER_AGENT,
@@ -25,51 +62,51 @@ async function fetchFromWeb() {
       },
       timeout: REQUEST_TIMEOUT
     });
-    
+
     const $ = cheerio.load(data);
     const articles = [];
-    
-    // Selectors for article cards (most specific first)
+
+    // Selector priority — most specific first
     const selectors = [
       '.wp-block-post',
       'article',
       '.article-card',
       '.post'
     ];
-    
+
     for (const selector of selectors) {
       $(selector).each((i, el) => {
         if (articles.length >= 10) return false;
-        
+
         const $el = $(el);
-        
-        // Extract title
+
+        // Extract title — multiple selectors for different CMS layouts
         const title = $el.find('h2 a, h3 a, .wp-block-wp-curate-post-title a, .title a, .headline a').first().text().trim();
         if (!title) return;
 
         // Extract excerpt — Comic Book uses subheadline for descriptions
         const excerpt = $el.find('.wp-block-savage-platform-post-subheadline, .excerpt, .summary').first().text().trim();
-        
+
         // Extract date
         const dateAttr = $el.find('time').attr('datetime');
         const dateText = $el.find('time, .date, .published').first().text().trim();
         const date = dateParser.parse(dateAttr || dateText, new Date());
-        
-        // Extract image
-        let image = $el.find('img').first().attr('src') || 
+
+        // Extract image — try src and data-src
+        let image = $el.find('img').first().attr('src') ||
                    $el.find('img').first().attr('data-src') || '';
         if (image.startsWith('//')) image = `https:${image}`;
-        
+
         // Extract link
         const link = $el.find('h2 a, h3 a, .wp-block-wp-curate-post-title a, .title a, .headline a').first().attr('href') || '';
-        
+
         // Extract tags
         const tags = [];
         $el.find('.category a, .tag a').each((i, tag) => {
           const tagText = $(tag).text().trim().toLowerCase();
           if (tagText) tags.push(tagText);
         });
-        
+
         if (title && link) {
           articles.push({
             title,
@@ -83,10 +120,10 @@ async function fetchFromWeb() {
           });
         }
       });
-      
+
       if (articles.length > 0) break;
     }
-    
+
     console.log(`[ComicBook] Found ${articles.length} articles from web`);
     return articles;
   } catch (error) {
@@ -95,32 +132,37 @@ async function fetchFromWeb() {
   }
 }
 
+// ---- FEATURE: RSS feed fetcher ----
+
 /**
- * Fetch from RSS feed
+ * Fetch Comic Book articles from RSS feed.
+ * Used as fallback when web scraping fails.
+ *
+ * @returns {Promise<Array>} Array of article objects
  */
 async function fetchFromRSS() {
   try {
     console.log('[ComicBook] Fetching from RSS...');
-    
+
     const feed = await rssParser.parseURL(CB_RSS);
     const articles = [];
-    
+
     feed.items.slice(0, 10).forEach(item => {
       const title = item.title?.trim();
       const excerpt = item.contentSnippet || '';
       const date = dateParser.parse(item.pubDate || item.isoDate, new Date());
       const link = item.link;
-      
-      // Extract image from content
+
+      // Extract image from content:encoded HTML
       let image = '';
       const imgMatch = item['content:encoded']?.match(/<img[^>]+src="([^"]+)"/);
       if (imgMatch) {
         image = imgMatch[1];
       }
-      
+
       // Extract categories
       const tags = item.categories?.map(c => c.toLowerCase()) || ['news', 'anime', 'manga'];
-      
+
       if (title && link) {
         articles.push({
           title,
@@ -134,7 +176,7 @@ async function fetchFromRSS() {
         });
       }
     });
-    
+
     console.log(`[ComicBook] Found ${articles.length} articles from RSS`);
     return articles;
   } catch (error) {
@@ -143,22 +185,33 @@ async function fetchFromRSS() {
   }
 }
 
+// ══════════════════════════════════════════════════════════════
+// MAIN FETCH FUNCTION (with retry logic)
+// ══════════════════════════════════════════════════════════════
+
+// ---- FEATURE: Comic Book fetch with retry ----
+
 /**
- * Main fetch function
+ * Fetch Comic Book articles with exponential backoff retry.
+ *
+ * Strategy: Web scrape → RSS fallback → Retry
+ *
+ * @param {number} [retries=2] - Number of retry attempts
+ * @returns {Promise<Array>} Array of article objects, or empty array on failure
  */
 module.exports = async (retries = 2) => {
   for (let i = 0; i <= retries; i++) {
     try {
       let articles = await fetchFromWeb();
-      
+
       if (articles.length === 0) {
         articles = await fetchFromRSS();
       }
-      
+
       if (articles.length > 0) {
         return articles;
       }
-      
+
       if (i < retries) {
         console.log(`[ComicBook] Retry ${i + 1}/${retries}...`);
         await new Promise(r => setTimeout(r, 1000 * (i + 1)));
@@ -170,7 +223,9 @@ module.exports = async (retries = 2) => {
       }
     }
   }
-  
+
   console.error('[ComicBook] All fetch attempts failed');
   return [];
 };
+
+// ══════════════════════════════════════════════════════════════ END: fetchComicBook.js

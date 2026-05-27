@@ -1,8 +1,40 @@
+/*
+ * ======= • ======= • ======= • ======= • =======• =======
+ * AniNewsAPI — api/openapi.js
+ * Repository: https://github.com/Shineii86/AniNewsAPI
+ *
+ * @description
+ *   OpenAPI 3.0.3 specification endpoint. Returns a
+ *   machine-readable API spec for Swagger UI, Postman,
+ *   and auto-generated client libraries.
+ *
+ * @endpoint GET /api/openapi
+ *
+ * @version 4.1.6
+ * @author  Shinei Nouzen
+ * @license MIT
+ * ======= • ======= • ======= • ======= • =======• =======
+ */
+
+// ══════════════════════════════════════════════════════════════
+// REQUEST HANDLER
+// ══════════════════════════════════════════════════════════════
+
+// ---- FEATURE: GET /api/openapi handler ----
+
+/**
+ * Main request handler for GET /api/openapi.
+ *
+ * Returns a complete OpenAPI 3.0.3 specification covering
+ * all 12 API endpoints with parameter schemas, response
+ * descriptions, and the Article component schema.
+ */
 module.exports = (req, res) => {
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Cache-Control', 'public, s-maxage=3600');
 
+  // ─── OpenAPI specification ───
   const spec = {
     openapi: '3.0.3',
     info: {
@@ -123,3 +155,5 @@ module.exports = (req, res) => {
 
   res.status(200).json(spec);
 };
+
+// ══════════════════════════════════════════════════════════════ END: api/openapi.js

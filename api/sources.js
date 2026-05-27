@@ -1,17 +1,56 @@
+/*
+ * ======= • ======= • ======= • ======= • =======• =======
+ * AniNewsAPI — api/sources.js
+ * Repository: https://github.com/Shineii86/AniNewsAPI
+ *
+ * @description
+ *   Per-source health and statistics endpoint. Performs
+ *   real-time fetches against each source to determine
+ *   health status, article count, and latency. Results
+ *   are tracked in cacheHandler for persistence.
+ *
+ * @endpoint GET /api/sources
+ *
+ * @version 4.1.6
+ * @author  Shinei Nouzen
+ * @license MIT
+ * ======= • ======= • ======= • ======= • =======• =======
+ */
+
 const { CORS_HEADERS } = require('../utils/constants');
 const { SOURCES, SOURCE_KEYS } = require('../utils/sources');
 const cacheHandler = require('../utils/cacheHandler');
 
+// ══════════════════════════════════════════════════════════════
+// REQUEST HANDLER
+// ══════════════════════════════════════════════════════════════
+
+// ---- FEATURE: GET /api/sources handler ----
+
+/**
+ * Main request handler for GET /api/sources.
+ *
+ * Runs lightweight health checks for all 7 sources in parallel.
+ * Each source is fetched to measure:
+ *   - Health status (healthy / degraded)
+ *   - Article count
+ *   - Fetch latency (ms)
+ *   - Last fetch timestamp
+ *   - Last error (if any)
+ *
+ * NOTE: This endpoint triggers actual fetches, so it's heavier
+ *       than a typical health check. Cache for 2 minutes.
+ */
 module.exports = async (req, res) => {
   const startTime = Date.now();
   Object.entries(CORS_HEADERS).forEach(([k, v]) => res.setHeader(k, v));
   if (req.method === 'OPTIONS') { res.status(204).end(); return; }
 
-  // Check disk metrics (persists within same function instance)
+  // ─── Load persisted metrics for fallback data ───
   const diskMetrics = cacheHandler.getSourceMetrics();
   const hasDiskData = Object.keys(diskMetrics).length > 0;
 
-  // Run lightweight health checks for each source in parallel
+  // ─── Run parallel health checks ───
   const results = await Promise.allSettled(
     SOURCE_KEYS.map(async key => {
       const config = SOURCES[key];
@@ -22,6 +61,7 @@ module.exports = async (req, res) => {
         const articles = await config.fetch();
         const latency = Date.now() - fetchStart;
         cacheHandler.trackSource(key, { count: articles.length });
+
         return {
           key,
           name: config.name,
@@ -34,6 +74,7 @@ module.exports = async (req, res) => {
       } catch (error) {
         const latency = Date.now() - fetchStart;
         cacheHandler.trackSource(key, { error: error.message });
+
         return {
           key,
           name: config.name,
@@ -47,6 +88,7 @@ module.exports = async (req, res) => {
     })
   );
 
+  // ─── Map results (handle rejected promises) ───
   const sources = results.map(r => r.status === 'fulfilled' ? r.value : {
     key: 'unknown',
     name: 'Unknown',
@@ -58,9 +100,11 @@ module.exports = async (req, res) => {
   });
 
   const responseTime = Date.now() - startTime;
+
   res.setHeader('Content-Type', 'application/json');
   res.setHeader('Cache-Control', 'public, max-age=120');
   res.setHeader('X-Response-Time', `${responseTime}ms`);
+
   res.json({
     success: true,
     data: sources,
@@ -73,3 +117,5 @@ module.exports = async (req, res) => {
     }
   });
 };
+
+// ══════════════════════════════════════════════════════════════ END: api/sources.js

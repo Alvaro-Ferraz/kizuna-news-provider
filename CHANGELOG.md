@@ -4,6 +4,14 @@ All notable changes to **AniNewsAPI** will be documented in this file.
 
 ---
 
+## [4.2.0] - 2026-05-28
+
+### Changed
+- **Code style overhaul**: Restructured all 26 source files with AlisaReactionBot-style documentation — box-style headers (project, author, license), section markers (`// ═══ SECTION ═══`), feature markers (`// ---- FEATURE: XYZ ----`), function-level JSDoc with @param/@returns, inline notes for non-obvious logic, and module footers
+- **Consistent documentation**: Every utility, API endpoint, fetcher, and entry file now follows the same structured format for improved readability and grep-ability
+
+---
+
 ## [4.1.6] - 2026-05-27
 
 ### Fixed

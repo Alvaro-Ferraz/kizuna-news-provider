@@ -1,21 +1,97 @@
-/**
- * Application constants
+/*
+ * ======= • ======= • ======= • ======= • =======• =======
+ * AniNewsAPI — constants.js
+ * Repository: https://github.com/Shineii86/AniNewsAPI
+ *
+ * @description
+ *   Centralized application constants. Every tunable value,
+ *   default, and shared string lives here — no magic numbers
+ *   scattered across the codebase.
+ *
+ * @exports
+ *   APP_NAME, APP_VERSION, APP_DESCRIPTION,
+ *   CACHE_TTL, MAX_LIMIT, DEFAULT_LIMIT, DEFAULT_SORT,
+ *   USER_AGENT, REQUEST_TIMEOUT, CONTENT_TIMEOUT,
+ *   MAX_ARTICLES_PER_SOURCE, CORS_HEADERS
+ *
+ * @version 4.1.6
+ * @author  Shinei Nouzen
+ * @license MIT
+ * ======= • ======= • ======= • ======= • =======• =======
  */
+
+// ══════════════════════════════════════════════════════════════
+// APPLICATION IDENTITY
+// ══════════════════════════════════════════════════════════════
+
+// ---- FEATURE: App metadata ----
 module.exports = {
+  /** @type {string} Application display name */
   APP_NAME: 'AniNewsAPI',
+
+  /** @type {string} Semantic version — keep in sync with package.json */
   APP_VERSION: '4.1.6',
+
+  /** @type {string} Short description for API index and OpenAPI spec */
   APP_DESCRIPTION: 'Powerful multi-source anime news API',
+
+  // ══════════════════════════════════════════════════════════════
+  // CACHE & LIMITS
+  // ══════════════════════════════════════════════════════════════
+
+  // ---- FEATURE: Cache configuration ----
+  /**
+   * Default cache TTL in seconds.
+   * NOTE: Overridden by CACHE_TTL env var at runtime.
+   * @type {number}
+   */
   CACHE_TTL: parseInt(process.env.CACHE_TTL) || 600,
+
+  /** @type {number} Maximum articles a client can request per page */
   MAX_LIMIT: 100,
+
+  /** @type {number} Default page size when client omits ?limit= */
   DEFAULT_LIMIT: 20,
+
+  /** @type {string} Default sort order for /api/news */
   DEFAULT_SORT: 'latest',
+
+  // ══════════════════════════════════════════════════════════════
+  // NETWORKING
+  // ══════════════════════════════════════════════════════════════
+
+  // ---- FEATURE: HTTP client settings ----
+  /**
+   * Browser-like User-Agent for web scraping.
+   * NOTE: Some sources block requests without a real UA string.
+   * @type {string}
+   */
   USER_AGENT: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+
+  /** @type {number} Timeout (ms) for RSS and lightweight fetches */
   REQUEST_TIMEOUT: 15000,
+
+  /** @type {number} Timeout (ms) for full-article content extraction */
   CONTENT_TIMEOUT: 20000,
+
+  /** @type {number} Cap per source to prevent runaway fetches */
   MAX_ARTICLES_PER_SOURCE: 15,
+
+  // ══════════════════════════════════════════════════════════════
+  // CORS
+  // ══════════════════════════════════════════════════════════════
+
+  // ---- FEATURE: CORS headers ----
+  /**
+   * Shared CORS headers applied to every API response.
+   * NOTE: Also duplicated in vercel.json for edge middleware.
+   * @type {Object.<string, string>}
+   */
   CORS_HEADERS: {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type'
   }
 };
+
+// ══════════════════════════════════════════════════════════════ END: constants.js
