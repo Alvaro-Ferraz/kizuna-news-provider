@@ -1,5 +1,5 @@
 > [!NOTE]
-> The Old Deployment URL `https://aninewsapi.vercel.app` Is No Longer Accessible. Use The Current URL: **https://aninews.vercel.app**
+> **API MAYBE Temporarily Paused** due to suspiciously too many requests. My hosted version of this API is only for testing purposes. You MUST host your own instance to use the API.
 
 <div align="center">
   
@@ -1115,5 +1115,5 @@ Free to use, modify, and distribute — see the [LICENSE](LICENSE) file for deta
 <p align="center">
   <b>Made With ❤️ For The Anime Community</b>
   <br/><br/>
-  <sub>© 2026 Shineii86. All Rights Reserved.</sub>
+  <sub>© Shinei Nouzen. All Rights Reserved.</sub>
 </p>
