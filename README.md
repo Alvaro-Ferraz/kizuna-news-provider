@@ -21,7 +21,7 @@
   <img src="https://img.shields.io/badge/Express-5.1-000000?style=flat-square&logo=express&logoColor=white" alt="Express"/>
   <img src="https://img.shields.io/badge/Vercel-Serverless-000000?style=flat-square&logo=vercel&logoColor=white" alt="Vercel"/>
   <img src="https://img.shields.io/badge/License-MIT-22c55e?style=flat-square&logo=mit&logoColor=white" alt="License"/>
-  <img src="https://img.shields.io/badge/Version-4.2.0-f43f8e?style=flat-square&logoColor=white" alt="Version"/>
+  <img src="https://img.shields.io/badge/Version-5.0.0-f43f8e?style=flat-square&logoColor=white" alt="Version"/>
   <img src="https://img.shields.io/badge/Sources-7-a855f7?style=flat-square&logoColor=white" alt="Sources"/>
   <img src="https://img.shields.io/badge/Endpoints-12-6366f1?style=flat-square&logoColor=white" alt="Endpoints"/>
 </p>
@@ -86,7 +86,10 @@
 - 🏷️ **Tag Filtering** — Browse articles by tag with count aggregation
 - 📊 **Source Health** — Real-time per-source health checks, latency, and article counts
 - 🔒 **CORS Enabled** — Works from any frontend, no proxy needed
-- 🚀 **Zero-Config Deploy** — One click to Vercel, or run standalone with Express
+- 🚀 **Zero-Config Deploy** — One click to Vercel, Docker, or standalone with Express
+- 🆔 **Request ID Tracing** — Every request gets a UUID for debugging
+- ⏳ **HEAD Support** — All GET endpoints respond to HEAD requests
+- 📦 **Docker Ready** — Dockerfile with health check included
 
 ### How It Works
 
@@ -157,7 +160,7 @@ flowchart TD
 - **Timeout protection** — 15s per source, never hangs
 - **CORS enabled** — works from any frontend
 - **Security headers** — X-Frame-Options, X-Content-Type-Options
-- **Rate limiting** — 100 req/min per IP with headers
+- **Rate limiting** — 100 req/min per IP with `Retry-After` header
 
     </td>
     <td>
@@ -191,6 +194,11 @@ flowchart TD
 | 📋 OpenAPI Spec | Machine-readable 3.0.3 specification | ✅ |
 | 🚀 One-Click Deploy | Vercel button deployment | ✅ |
 | 🏗️ Express Mode | Standalone server with `npm start` | ✅ |
+| 🆔 Request ID | UUID v4 tracing on every request | ✅ |
+| ⏳ HEAD Support | HEAD method on all GET endpoints | ✅ |
+| 🐳 Docker | Dockerfile with health check | ✅ |
+| 📦 Shared Fetch Logic | DRY module for all endpoints | ✅ |
+| 📋 ESLint Config | Code quality enforcement | ✅ |
 
 ---
 
@@ -322,9 +330,10 @@ AniNewsAPI/
 │
 ├── 📂 utils/                          # ⚙️ Core logic
 │   ├── 📄 cacheHandler.js             #    💾 Two-tier cache (memory + disk)
-│   ├── 📄 constants.js                #    📌 Shared config & defaults
+│   ├── 📄 constants.js                #    📌 Shared config, CACHE_KEYS, RATE_LIMIT
 │   ├── 📄 contentParser.js            #    📄 Full-article content extraction
 │   ├── 📄 dateParser.js               #    📅 Multi-format date parsing
+│   ├── 📄 fetchAllSources.js          #    🔄 Shared fetch logic (DRY)
 │   ├── 📄 fetchANN.js                 #    📰 Anime News Network fetcher
 │   ├── 📄 fetchAnimeCorner.js         #    📰 Anime Corner fetcher
 │   ├── 📄 fetchAnimeHerald.js         #    📰 Anime Herald fetcher
@@ -337,6 +346,8 @@ AniNewsAPI/
 │
 ├── 📂 data/                           # 💾 Disk cache files (auto-generated)
 │
+├── 🐳 Dockerfile                      # 🐳 Docker deployment with health check
+├── 📄 .eslintrc.json                  # 🔍 ESLint configuration
 ├── 📄 server.js                       # 🚀 Express server entry point
 ├── 📄 index.js                        # ▲ Vercel serverless entry point
 ├── 📄 test.js                         # 🧪 Integration test suite
@@ -413,6 +424,7 @@ bun dev
 | `CACHE_TTL` | `600` | Cache duration in seconds (10 minutes) |
 | `PORT` | `3000` | Server port (Express mode only) |
 | `CACHE_CLEAR_KEY` | — | API key for `POST /api/cache/clear` (optional) |
+| `RATE_LIMIT` | `100` | Max requests per minute per IP |
 | `API_URL` | `http://localhost:3000` | Base URL for test suite |
 
 ### Vercel Configuration
@@ -761,15 +773,20 @@ npm start
 
 ### 🐳 Docker
 
-```dockerfile
-FROM node:20-alpine
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci --production
-COPY . .
-EXPOSE 3000
-CMD ["node", "server.js"]
+```bash
+# Build and run
+docker build -t aninews-api .
+docker run -p 3000:3000 aninews-api
+
+# Or with environment variables
+docker run -p 3000:3000 -e CACHE_TTL=300 -e RATE_LIMIT=200 aninews-api
 ```
+
+The `Dockerfile` includes:
+- Alpine-based Node.js 20 image
+- `npm ci --omit=dev` for production-only deps
+- Health check via `/api/health`
+- Graceful shutdown on SIGTERM
 
 ---
 
@@ -779,7 +796,9 @@ CMD ["node", "server.js"]
 |:---|:---|:---|
 | `npm run dev` | 🔥 Start development server | Runs on `localhost:3000` |
 | `npm start` | 🚀 Start production server | `NODE_ENV=production node server.js` |
-| `npm test` | 🧪 Run integration tests | Tests all 12 endpoints |
+| `npm test` | 🧪 Run integration tests | Tests all endpoints |
+| `npm run lint` | 🔍 Run ESLint | Check code quality |
+| `npm run lint:fix` | 🔧 Auto-fix lint issues | Fix what's possible |
 | `npm run build` | 📦 Build (no-op for serverless) | Vercel handles this |
 
 ---
@@ -811,11 +830,10 @@ CMD ["node", "server.js"]
 
 | Version | Date | Key Changes |
 |:---|:---|:---|
-| **4.2.0** | 2026-05-28 | Code style overhaul — AlisaReactionBot-style documentation across all 26 files |
-| **4.1.6** | 2026-05-27 | Full excerpts, no truncation — removed 200-char limit from all 7 fetchers |
-| **4.1.5** | 2026-05-27 | Real excerpts for Comic Book, Anime Corner, Anime Herald |
-| **4.1.4** | 2026-05-27 | Sources endpoint now does live health checks |
-| **4.1.3** | 2026-05-27 | Persist source metrics to disk for serverless survival |
+| **5.0.0** | 2026-07-31 | Shared fetch module, Docker, HEAD support, request IDs, ESLint, version sync |
+| **4.2.2** | 2026-05-28 | TOS/Privacy route restoration |
+| **4.2.0** | 2026-05-28 | Code style overhaul — AlisaReactionBot-style documentation |
+| **4.1.6** | 2026-05-27 | Full excerpts, no truncation — removed 200-char limit |
 | **4.1.0** | 2026-05-26 | Date range filtering, cursor pagination, search scoring |
 
 > 📝 See [CHANGELOG.md](./CHANGELOG.md) for the full version history.
@@ -938,6 +956,13 @@ Yes! Use <code>npm start</code> to run the Express server on any VPS, Docker con
 - [x] 🔒 Cache clear authentication
 - [x] 🚀 One-click Vercel deployment
 - [x] 📖 Comprehensive documentation
+- [x] 🐳 Docker deployment with Dockerfile
+- [x] 🆔 Request ID tracing (UUID v4)
+- [x] ⏳ HEAD method support on all GET endpoints
+- [x] 📦 Shared fetch module (DRY — fetchAllSources.js)
+- [x] 📋 ESLint configuration for code quality
+- [x] 🔄 Retry-After header on 429 responses
+- [x] 📌 Centralized CACHE_KEYS constants
 
 ---
 

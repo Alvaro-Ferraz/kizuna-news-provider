@@ -101,10 +101,10 @@ module.exports = fetchMySource;
 
 ### 2. Register the source
 
-In `api/news.js`, add to the `SOURCES` object:
+In `utils/sources.js`, add to the `SOURCES` object:
 
 ```javascript
-const fetchMySource = require('../utils/fetchMySource');
+const fetchMySource = require('./fetchMySource');
 
 const SOURCES = {
   // ... existing sources ...
@@ -122,7 +122,7 @@ curl "http://localhost:3000/api/news?source=mysource&limit=5"
 ### 4. Submit
 
 ```bash
-git add utils/fetchMySource.js api/news.js
+git add utils/fetchMySource.js utils/sources.js
 git commit -m "feat: add My Source as news source"
 ```
 
@@ -154,6 +154,12 @@ Examples:
 # Run all tests
 npm test
 
+# Run linter
+npm run lint
+
+# Auto-fix lint issues
+npm run lint:fix
+
 # Test against production
 API_URL=https://aninews.vercel.app npm test
 ```
@@ -175,14 +181,18 @@ AniNewsAPI/
 │   └── ...
 ├── utils/                  # Core logic
 │   ├── fetch*.js           # Source scrapers (add yours here)
+│   ├── fetchAllSources.js  # Shared fetch logic (DRY)
 │   ├── cacheHandler.js     # Cache layer
-│   ├── constants.js        # Shared config
+│   ├── constants.js        # Shared config & CACHE_KEYS
+│   ├── sources.js          # Source registry
 │   └── ...
 ├── public/                 # Static files
 │   ├── index.html          # Landing page
 │   ├── tos.html            # Terms of Service
 │   ├── privacy.html        # Privacy Policy
 │   └── ...
+├── Dockerfile              # Docker deployment
+├── .eslintrc.json          # ESLint config
 ├── server.js               # Express server (local dev)
 ├── test.js                 # Test suite
 └── vercel.json             # Vercel config

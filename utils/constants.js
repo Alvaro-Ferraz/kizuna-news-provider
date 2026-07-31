@@ -83,7 +83,7 @@ module.exports = {
    * NOTE: Some sources block requests without a real UA string.
    * @type {string}
    */
-  USER_AGENT: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+  USER_AGENT: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
 
   /** @type {number} Timeout (ms) for RSS and lightweight fetches */
   REQUEST_TIMEOUT: 15000,
