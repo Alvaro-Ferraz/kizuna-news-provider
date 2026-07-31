@@ -10,11 +10,11 @@
  *
  * @exports
  *   APP_NAME, APP_VERSION, APP_DESCRIPTION,
- *   CACHE_TTL, MAX_LIMIT, DEFAULT_LIMIT, DEFAULT_SORT,
+ *   CACHE_TTL, CACHE_KEYS, MAX_LIMIT, DEFAULT_LIMIT, DEFAULT_SORT,
  *   USER_AGENT, REQUEST_TIMEOUT, CONTENT_TIMEOUT,
- *   MAX_ARTICLES_PER_SOURCE, CORS_HEADERS
+ *   MAX_ARTICLES_PER_SOURCE, CORS_HEADERS, RATE_LIMIT, RATE_WINDOW
  *
- * @version 4.1.6
+ * @version 5.0.0
  * @author  Shinei Nouzen
  * @license MIT
  * ======= • ======= • ======= • ======= • =======• =======
@@ -30,7 +30,7 @@ module.exports = {
   APP_NAME: 'AniNewsAPI',
 
   /** @type {string} Semantic version — keep in sync with package.json */
-  APP_VERSION: '4.1.6',
+  APP_VERSION: '5.0.0',
 
   /** @type {string} Short description for API index and OpenAPI spec */
   APP_DESCRIPTION: 'Powerful multi-source anime news API',
@@ -46,6 +46,23 @@ module.exports = {
    * @type {number}
    */
   CACHE_TTL: parseInt(process.env.CACHE_TTL) || 600,
+
+  /**
+   * Centralized cache key constants.
+   * Eliminates hardcoded 'news_all', 'news_ann', etc. across files.
+   * @type {Object.<string, string>}
+   */
+  CACHE_KEYS: {
+    ALL: 'news_all',
+    ANN: 'news_ann',
+    ANIMECORNER: 'news_animecorner',
+    MYANIMELIST: 'news_myanimelist',
+    OTAKUSA: 'news_otakuusa',
+    CRUNCHYROLL: 'news_crunchyroll',
+    ANIMEHERALD: 'news_animeherald',
+    COMICBOOK: 'news_comicbook',
+    ARTICLE_PREFIX: 'article-content-'
+  },
 
   /** @type {number} Maximum articles a client can request per page */
   MAX_LIMIT: 100,
@@ -78,7 +95,7 @@ module.exports = {
   MAX_ARTICLES_PER_SOURCE: 15,
 
   // ══════════════════════════════════════════════════════════════
-  // CORS
+  // CORS & RATE LIMITING
   // ══════════════════════════════════════════════════════════════
 
   // ---- FEATURE: CORS headers ----
@@ -89,9 +106,16 @@ module.exports = {
    */
   CORS_HEADERS: {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type'
-  }
+    'Access-Control-Allow-Methods': 'GET, POST, HEAD, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, X-Api-Key, X-Request-Id, If-None-Match'
+  },
+
+  // ---- FEATURE: Rate limiting ----
+  /** @type {number} Max requests per window */
+  RATE_LIMIT: parseInt(process.env.RATE_LIMIT) || 100,
+
+  /** @type {number} Window duration in milliseconds (1 minute) */
+  RATE_WINDOW: 60 * 1000
 };
 
 // ══════════════════════════════════════════════════════════════ END: constants.js

@@ -11,13 +11,13 @@
  *
  * @endpoint GET /api/search
  *
- * @version 4.1.6
+ * @version 5.0.0
  * @author  Shinei Nouzen
  * @license MIT
  * ======= • ======= • ======= • ======= • =======• =======
  */
 
-const cacheHandler = require('../utils/cacheHandler');
+const { fetchCached } = require('../utils/fetchAllSources');
 const { CORS_HEADERS, MAX_LIMIT, DEFAULT_LIMIT } = require('../utils/constants');
 const { SOURCES } = require('../utils/sources');
 
@@ -48,6 +48,13 @@ module.exports = async (req, res) => {
   Object.entries(CORS_HEADERS).forEach(([k, v]) => res.setHeader(k, v));
   if (req.method === 'OPTIONS') { res.status(204).end(); return; }
 
+  // HEAD requests return headers only
+  if (req.method === 'HEAD') {
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Cache-Control', 'public, max-age=300');
+    return res.status(200).end();
+  }
+
   try {
     const query = req.query.q?.trim();
     const source = req.query.source?.toLowerCase() || 'all';
@@ -67,25 +74,7 @@ module.exports = async (req, res) => {
     }
 
     // ─── Fetch articles (from cache or sources) ───
-    const cacheKey = `news_${source}`;
-    let articles = cacheHandler.get(cacheKey);
-
-    if (!articles || articles.length === 0) {
-      const fetchPromises = [];
-      if (source === 'all') {
-        Object.entries(SOURCES).forEach(([key, config]) => {
-          fetchPromises.push(config.fetch().catch(() => []));
-        });
-      } else if (SOURCES[source]?.fetch) {
-        fetchPromises.push(SOURCES[source].fetch().catch(() => []));
-      }
-      const results = await Promise.allSettled(fetchPromises);
-      articles = [];
-      results.forEach(r => {
-        if (r.status === 'fulfilled') articles = articles.concat(r.value || []);
-      });
-      if (articles.length > 0) cacheHandler.set(cacheKey, articles, 600);
-    }
+    const articles = await fetchCached(source);
 
     // ─── Full-text search with relevance scoring ───
 

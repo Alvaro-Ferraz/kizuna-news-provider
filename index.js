@@ -11,7 +11,7 @@
  *
  * @exports Vercel serverless function handler
  *
- * @version 4.1.6
+ * @version 5.0.0
  * @author  Shinei Nouzen
  * @license MIT
  * ======= • ======= • ======= • ======= • =======• =======

@@ -10,11 +10,13 @@
  *
  * @endpoint GET /api/openapi
  *
- * @version 4.1.6
+ * @version 5.0.0
  * @author  Shinei Nouzen
  * @license MIT
  * ======= • ======= • ======= • ======= • =======• =======
  */
+
+const { APP_VERSION } = require('../utils/constants');
 
 // ══════════════════════════════════════════════════════════════
 // REQUEST HANDLER
@@ -39,7 +41,7 @@ module.exports = (req, res) => {
     openapi: '3.0.3',
     info: {
       title: 'AniNewsAPI',
-      version: '4.1.6',
+      version: APP_VERSION,
       description: 'Real-time anime news aggregation API with smart caching, search, RSS feeds, and full-article extraction from 7 sources.',
       contact: { name: 'Shinei Nouzen', url: 'https://github.com/Shineii86', email: 'ikx7a@hotmail.com' },
       license: { name: 'MIT', url: 'https://opensource.org/licenses/MIT' }
@@ -64,8 +66,13 @@ module.exports = (req, res) => {
           ],
           responses: {
             '200': { description: 'Successful response with article array and metadata' },
-            '500': { description: 'Internal server error' }
+            '400': { description: 'Invalid parameters' },
+            '503': { description: 'No news available from any source' }
           }
+        },
+        head: {
+          summary: 'Check availability of news endpoint',
+          responses: { '200': { description: 'Endpoint available' } }
         }
       },
       '/api/news/tags': {
@@ -76,6 +83,10 @@ module.exports = (req, res) => {
             { name: 'source', in: 'query', schema: { type: 'string' }, description: 'Filter by source' }
           ],
           responses: { '200': { description: 'Tags with counts or filtered articles' } }
+        },
+        head: {
+          summary: 'Check availability of tags endpoint',
+          responses: { '200': { description: 'Endpoint available' } }
         }
       },
       '/api/news/{slug}': {
@@ -85,6 +96,13 @@ module.exports = (req, res) => {
             { name: 'slug', in: 'path', required: true, schema: { type: 'string' }, description: 'Article slug identifier' }
           ],
           responses: { '200': { description: 'Full article content' }, '404': { description: 'Article not found' } }
+        },
+        head: {
+          summary: 'Check if article exists',
+          parameters: [
+            { name: 'slug', in: 'path', required: true, schema: { type: 'string' }, description: 'Article slug identifier' }
+          ],
+          responses: { '200': { description: 'Article exists' } }
         }
       },
       '/api/search': {
@@ -99,6 +117,10 @@ module.exports = (req, res) => {
             { name: 'to', in: 'query', schema: { type: 'string', format: 'date' }, description: 'End date filter (YYYY-MM-DD)' }
           ],
           responses: { '200': { description: 'Search results with relevance scoring' }, '400': { description: 'Missing or invalid query' } }
+        },
+        head: {
+          summary: 'Check availability of search endpoint',
+          responses: { '200': { description: 'Endpoint available' } }
         }
       },
       '/api/rss': {
@@ -109,13 +131,19 @@ module.exports = (req, res) => {
             { name: 'limit', in: 'query', schema: { type: 'integer', default: 20 }, description: 'Max items' }
           ],
           responses: { '200': { description: 'RSS 2.0 XML feed' } }
+        },
+        head: {
+          summary: 'Check availability of RSS endpoint',
+          responses: { '200': { description: 'Endpoint available' } }
         }
       },
       '/api/health': {
-        get: { summary: 'Health check', responses: { '200': { description: 'API status, version, uptime' } } }
+        get: { summary: 'Health check', responses: { '200': { description: 'API status, version, uptime' } } },
+        head: { summary: 'Check health endpoint availability', responses: { '200': { description: 'Endpoint available' } } }
       },
       '/api/stats': {
-        get: { summary: 'Cache statistics', responses: { '200': { description: 'Cache hit/miss metrics' } } }
+        get: { summary: 'Cache statistics', responses: { '200': { description: 'Cache hit/miss metrics' } } },
+        head: { summary: 'Check stats endpoint availability', responses: { '200': { description: 'Endpoint available' } } }
       },
       '/api/cache/clear': {
         post: { summary: 'Clear cache', responses: { '200': { description: 'Cache cleared' } } }
@@ -123,7 +151,7 @@ module.exports = (req, res) => {
       '/api/stream': {
         get: {
           summary: 'Server-Sent Events stream for new articles',
-          responses: { '200': { description: 'SSE stream — events: new_article, heartbeat' } }
+          responses: { '200': { description: 'SSE stream — events: connected, status, heartbeat, info' } }
         }
       },
       '/api/sources': {
@@ -131,6 +159,10 @@ module.exports = (req, res) => {
           summary: 'Per-source health and statistics',
           description: 'Returns health status, article counts, and last fetch time for each news source.',
           responses: { '200': { description: 'Source metrics array with health status' } }
+        },
+        head: {
+          summary: 'Check sources endpoint availability',
+          responses: { '200': { description: 'Endpoint available' } }
         }
       }
     },

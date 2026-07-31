@@ -1,13 +1,15 @@
 {
   "name": "aninews-api",
-  "version": "4.1.6",
+  "version": "5.0.0",
   "description": "Powerful Anime News API with multi-source scraping",
   "main": "server.js",
   "scripts": {
     "dev": "node server.js",
     "build": "echo 'Build complete'",
     "start": "NODE_ENV=production node server.js",
-    "test": "node test.js"
+    "test": "node test.js",
+    "lint": "eslint . --ignore-pattern 'node_modules/' --ignore-pattern 'data/'",
+    "lint:fix": "eslint . --fix --ignore-pattern 'node_modules/' --ignore-pattern 'data/'"
   },
   "dependencies": {
     "axios": "^1.7.2",
@@ -16,6 +18,9 @@
     "he": "^1.2.0",
     "node-cache": "^5.1.2",
     "rss-parser": "^3.13.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.56.0"
   },
   "engines": {
     "node": ">=20.x"

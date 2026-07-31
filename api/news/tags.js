@@ -10,14 +10,14 @@
  *
  * @endpoint GET /api/news/tags
  *
- * @version 4.1.6
+ * @version 5.0.0
  * @author  Shinei Nouzen
  * @license MIT
  * ======= • ======= • ======= • ======= • =======• =======
  */
 
 const cacheHandler = require('../../utils/cacheHandler');
-const { CORS_HEADERS } = require('../../utils/constants');
+const { CORS_HEADERS, CACHE_KEYS } = require('../../utils/constants');
 
 // ══════════════════════════════════════════════════════════════
 // REQUEST HANDLER
@@ -40,9 +40,16 @@ module.exports = async (req, res) => {
   Object.entries(CORS_HEADERS).forEach(([k, v]) => res.setHeader(k, v));
   if (req.method === 'OPTIONS') { res.status(204).end(); return; }
 
+  // HEAD requests return headers only
+  if (req.method === 'HEAD') {
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Cache-Control', 'public, max-age=300');
+    return res.status(200).end();
+  }
+
   try {
     const { tag, source } = req.query;
-    const cachedNews = cacheHandler.get('news_all') || [];
+    const cachedNews = cacheHandler.get(CACHE_KEYS.ALL) || [];
 
     // ─── Mode 1: Tag listing (no ?tag= parameter) ───
 

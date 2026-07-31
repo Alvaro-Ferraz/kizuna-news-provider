@@ -4,6 +4,42 @@ All notable changes to **AniNewsAPI** will be documented in this file.
 
 ---
 
+## [5.0.0] - 2026-07-31
+
+### Added
+- **Shared fetch module** (`utils/fetchAllSources.js`): Extracted `fetchCached()` and `fetchAll()` from news.js into a reusable module — eliminates duplicate fetch-from-sources logic across `news.js`, `search.js`, and `rss.js` (3 files now share one implementation)
+- **Cache key constants** (`CACHE_KEYS` in `constants.js`): Centralized cache key definitions — replaced 15+ hardcoded `'news_all'`, `'news_ann'`, etc. strings with `CACHE_KEYS.ALL`, `CACHE_KEYS.ANN`, etc.
+- **Dockerfile**: Multi-stage Alpine-based Dockerfile with health check, `npm ci --omit=dev`, and `HEALTHCHECK` directive — Docker deployment now works as documented in README
+- **HEAD method support**: All GET endpoints now respond to HEAD requests with appropriate headers only (no body) — useful for monitoring, load balancers, and cache validation
+- **Retry-After header**: Rate limiter now sets the standard `Retry-After` HTTP header on 429 responses (in addition to the JSON body field)
+- **Request ID tracing**: Every request gets an `X-Request-Id` header (UUID v4) — supports client-supplied IDs via `X-Request-Id` header for correlation across distributed systems
+- **ETag support**: `/api/news` now generates ETag headers based on query parameters for cache validation
+- **Graceful shutdown**: Express server handles `SIGTERM` and `SIGINT` signals — closes connections cleanly before exit
+- **ESLint configuration** (`.eslintrc.json`): Added linting rules for code quality enforcement — `eqeqeq`, `no-var`, `prefer-const`, `no-throw-literal`
+- **Lint scripts**: `npm run lint` and `npm run lint:fix` added to `package.json`
+- **Rate limit env var**: `RATE_LIMIT` environment variable to configure request limit per minute (default 100)
+- **CORS Allow-Headers update**: Added `X-Request-Id` and `If-None-Match` to allowed CORS headers
+
+### Changed
+- **Version bump**: 4.2.2 → 5.0.0 across all files (package.json, constants.js, openapi.js, index.js, test.js) — fixed version drift where package.json said 4.1.6 while CHANGELOG said 4.2.2
+- **DRY refactored news/search/rss endpoints**: `api/news.js`, `api/search.js`, `api/rss.js` now import `fetchCached()` from `fetchAllSources.js` instead of each containing their own fetch logic
+- **`api/news/[slug].js`**: Uses `SOURCE_KEYS` from sources.js and `CACHE_KEYS` from constants.js instead of hardcoded arrays and strings
+- **`api/stream.js`**: Uses `CACHE_KEYS.ALL` instead of hardcoded `'news_all'`
+- **`api/news/tags.js`**: Uses `CACHE_KEYS.ALL` instead of hardcoded `'news_all'`
+- **`api/openapi.js`**: Imports `APP_VERSION` from constants.js instead of hardcoding version string
+- **CORS methods**: Updated `Access-Control-Allow-Methods` to include `HEAD` method
+- **devDependencies**: Added `eslint` ^8.56.0 for code quality tooling
+- **server.js HEAD routes**: Added `app.head()` for all GET endpoints
+
+### Improved
+- **Code quality**: ESLint config enforces consistent patterns across the codebase
+- **Maintainability**: Single source of truth for fetch logic and cache keys reduces future bugs
+- **Docker support**: Working Dockerfile with health check enables one-command container deployment
+- **Observability**: Request IDs enable tracing individual requests through the system
+- **HTTP compliance**: HEAD support, Retry-After header, and ETag follow HTTP standards
+
+---
+
 ## [4.2.2] - 2026-05-28
 
 ### Fixed

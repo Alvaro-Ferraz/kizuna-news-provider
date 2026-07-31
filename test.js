@@ -11,7 +11,7 @@
  *
  * @usage node test.js (requires running server)
  *
- * @version 4.1.6
+ * @version 5.0.0
  * @author  Shinei Nouzen
  * @license MIT
  * ======= • ======= • ======= • ======= • =======• =======
@@ -38,7 +38,7 @@ const BASE_URL = process.env.API_URL || 'http://localhost:3000';
  *   3. Reports pass/fail with timing
  */
 async function run() {
-  console.log(`\n🧪 AniNewsAPI v${APP_VERSION} Tests\n${'═'.repeat(50)}\n`);
+  console.log(`\n  AniNewsAPI v${APP_VERSION} Tests\n${'='.repeat(50)}\n`);
   let passed = 0, failed = 0;
 
   /**
@@ -55,12 +55,12 @@ async function run() {
       const r = await axios.get(url, { timeout: 60000, validateStatus: () => true, ...opts });
       if (validate) {
         const v = validate(r);
-        if (v !== true) { console.log(`❌ ${v}`); failed++; return; }
+        if (v !== true) { console.log(`FAIL ${v}`); failed++; return; }
       }
-      console.log(`✅ (${r.data?.responseTime || r.headers?.['x-response-time'] || '-'})`);
+      console.log(`PASS (${r.data?.responseTime || r.headers?.['x-response-time'] || '-'})`);
       passed++;
     } catch (e) {
-      console.log(`❌ ${e.response?.status || e.message}`);
+      console.log(`FAIL ${e.response?.status || e.message}`);
       failed++;
     }
   }
@@ -97,8 +97,13 @@ async function run() {
   await test('Sort oldest', `${BASE_URL}/api/news?sort=oldest&limit=2`,
     r => r.data.meta?.sort === 'oldest' ? true : 'sort mismatch');
 
+  // HEAD support
+  await test('HEAD /api/news', `${BASE_URL}/api/news`,
+    r => r.status === 200 ? true : `expected 200, got ${r.status}`,
+    { method: 'HEAD' });
+
   // Error cases
-  await test('Invalid source → 400', `${BASE_URL}/api/news?source=fake`,
+  await test('Invalid source -> 400', `${BASE_URL}/api/news?source=fake`,
     r => r.status === 400 ? true : `expected 400, got ${r.status}`);
 
   // ══════════════════════════════════════════════════════════════
@@ -116,7 +121,7 @@ async function run() {
   // ---- FEATURE: Search endpoint tests ----
   await test('Search', `${BASE_URL}/api/search?q=anime&limit=3`,
     r => r.data.meta?.query === 'anime' ? true : 'query mismatch');
-  await test('Search too short → 400', `${BASE_URL}/api/search?q=a`,
+  await test('Search too short -> 400', `${BASE_URL}/api/search?q=a`,
     r => r.status === 400 ? true : `expected 400, got ${r.status}`);
 
   // ══════════════════════════════════════════════════════════════
@@ -152,7 +157,7 @@ async function run() {
   // ══════════════════════════════════════════════════════════════
 
   // ---- FEATURE: Test results summary ----
-  console.log(`\n${'═'.repeat(50)}\n  ${passed} passed, ${failed} failed\n${'═'.repeat(50)}\n`);
+  console.log(`\n${'='.repeat(50)}\n  ${passed} passed, ${failed} failed\n${'='.repeat(50)}\n`);
   process.exit(failed > 0 ? 1 : 0);
 }
 

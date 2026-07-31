@@ -10,7 +10,7 @@
  *
  * @endpoint GET /api/news/:slug
  *
- * @version 4.1.6
+ * @version 5.0.0
  * @author  Shinei Nouzen
  * @license MIT
  * ======= • ======= • ======= • ======= • =======• =======
@@ -18,7 +18,8 @@
 
 const cacheHandler = require('../../utils/cacheHandler');
 const contentParser = require('../../utils/contentParser');
-const { CORS_HEADERS } = require('../../utils/constants');
+const { CORS_HEADERS, CACHE_KEYS } = require('../../utils/constants');
+const { SOURCE_KEYS } = require('../../utils/sources');
 
 // ══════════════════════════════════════════════════════════════
 // REQUEST HANDLER
@@ -44,6 +45,13 @@ module.exports = async (req, res) => {
   Object.entries(CORS_HEADERS).forEach(([k, v]) => res.setHeader(k, v));
   if (req.method === 'OPTIONS') { res.status(204).end(); return; }
 
+  // HEAD requests return headers only
+  if (req.method === 'HEAD') {
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Cache-Control', 'public, max-age=1800');
+    return res.status(200).end();
+  }
+
   // ─── Validate slug parameter ───
   if (!slug) {
     return res.status(400).json({ success: false, error: 'Missing slug parameter' });
@@ -53,13 +61,13 @@ module.exports = async (req, res) => {
     // ─── Search cached articles for matching slug ───
 
     // Try combined cache first
-    const cachedNews = cacheHandler.get('news_all') || [];
+    const cachedNews = cacheHandler.get(CACHE_KEYS.ALL) || [];
     let article = cachedNews.find(a => a.slug === slug);
 
-    // Fallback: search individual source caches
+    // Fallback: search individual source caches using SOURCE_KEYS
     if (!article) {
-      for (const src of ['ann', 'animecorner', 'myanimelist', 'otakuusa', 'crunchyroll', 'animeherald', 'comicbook']) {
-        article = (cacheHandler.get(`news_${src}`) || []).find(a => a.slug === slug);
+      for (const key of SOURCE_KEYS) {
+        article = (cacheHandler.get(`news_${key}`) || []).find(a => a.slug === slug);
         if (article) break;
       }
     }
@@ -74,7 +82,7 @@ module.exports = async (req, res) => {
 
     // ─── Check content cache ───
 
-    const contentCacheKey = `article-content-${slug}`;
+    const contentCacheKey = `${CACHE_KEYS.ARTICLE_PREFIX}${slug}`;
     const cachedContent = cacheHandler.get(contentCacheKey);
     if (cachedContent) {
       return res.json({

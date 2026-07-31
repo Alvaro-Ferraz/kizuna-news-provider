@@ -10,7 +10,7 @@
  *
  * @endpoint GET /api/health
  *
- * @version 4.1.6
+ * @version 5.0.0
  * @author  Shinei Nouzen
  * @license MIT
  * ======= • ======= • ======= • ======= • =======• =======
@@ -39,6 +39,13 @@ const { APP_NAME, APP_VERSION, CORS_HEADERS } = require('../utils/constants');
 module.exports = async (req, res) => {
   Object.entries(CORS_HEADERS).forEach(([k, v]) => res.setHeader(k, v));
   if (req.method === 'OPTIONS') { res.status(204).end(); return; }
+
+  // HEAD requests return headers only
+  if (req.method === 'HEAD') {
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Cache-Control', 'no-cache');
+    return res.status(200).end();
+  }
 
   try {
     const stats = cacheHandler.getStats();

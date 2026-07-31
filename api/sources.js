@@ -11,7 +11,7 @@
  *
  * @endpoint GET /api/sources
  *
- * @version 4.1.6
+ * @version 5.0.0
  * @author  Shinei Nouzen
  * @license MIT
  * ======= • ======= • ======= • ======= • =======• =======
@@ -46,9 +46,15 @@ module.exports = async (req, res) => {
   Object.entries(CORS_HEADERS).forEach(([k, v]) => res.setHeader(k, v));
   if (req.method === 'OPTIONS') { res.status(204).end(); return; }
 
+  // HEAD requests return headers only
+  if (req.method === 'HEAD') {
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Cache-Control', 'public, max-age=120');
+    return res.status(200).end();
+  }
+
   // ─── Load persisted metrics for fallback data ───
   const diskMetrics = cacheHandler.getSourceMetrics();
-  const hasDiskData = Object.keys(diskMetrics).length > 0;
 
   // ─── Run parallel health checks ───
   const results = await Promise.allSettled(

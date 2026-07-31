@@ -10,44 +10,19 @@
  *
  * @endpoint GET /api/news
  *
- * @version 4.1.6
+ * @version 5.0.0
  * @author  Shinei Nouzen
  * @license MIT
  * ======= • ======= • ======= • ======= • =======• =======
  */
 
-const cacheHandler = require('../utils/cacheHandler');
-const { CORS_HEADERS, MAX_LIMIT, DEFAULT_LIMIT, DEFAULT_SORT } = require('../utils/constants');
+const { fetchCached } = require('../utils/fetchAllSources');
+const { CORS_HEADERS, MAX_LIMIT, DEFAULT_LIMIT, DEFAULT_SORT, CACHE_KEYS } = require('../utils/constants');
 const { SOURCES, SOURCE_KEYS } = require('../utils/sources');
 
 // ══════════════════════════════════════════════════════════════
 // HELPER FUNCTIONS
 // ══════════════════════════════════════════════════════════════
-
-// ---- FEATURE: Cross-source deduplication ----
-
-/**
- * Remove duplicate articles across sources by normalized title.
- *
- * NOTE: Normalization strips punctuation and collapses whitespace
- *       so "Crunchyroll: New Anime!" and "Crunchyroll New Anime"
- *       are treated as the same article.
- *
- * @param {Array} articles - Mixed articles from multiple sources
- * @returns {Array} Deduplicated articles (first occurrence wins)
- */
-function deduplicateArticles(articles) {
-  const seen = new Map();
-  const unique = [];
-  for (const article of articles) {
-    const key = article.title.toLowerCase().replace(/[^\w\s]/g, '').replace(/\s+/g, ' ').trim();
-    if (!seen.has(key)) {
-      seen.set(key, true);
-      unique.push(article);
-    }
-  }
-  return unique;
-}
 
 // ---- FEATURE: Cursor-based pagination ----
 
@@ -74,73 +49,6 @@ function decodeCursor(cursor) {
   } catch {
     return null;
   }
-}
-
-// ══════════════════════════════════════════════════════════════
-// SOURCE FETCHER
-// ══════════════════════════════════════════════════════════════
-
-// ---- FEATURE: Parallel source fetching ----
-
-/**
- * Fetch articles from one or all sources in parallel.
- *
- * For each source:
- *   1. Call its fetch function
- *   2. Track success/failure metrics
- *   3. Concatenate results
- *   4. Deduplicate across sources
- *   5. Sort by date (newest first)
- *   6. Normalize tags and fill defaults
- *
- * @param {string} source - Source key ('all' or specific key)
- * @returns {Promise<Array>} Deduplicated, sorted articles
- */
-async function fetchFromSources(source) {
-  const sourcePromises = [], sourceNames = [];
-
-  if (source === 'all') {
-    Object.entries(SOURCES).forEach(([key, config]) => {
-      sourcePromises.push(config.fetch().catch(() => []));
-      sourceNames.push(key);
-    });
-  } else if (SOURCES[source]?.fetch) {
-    sourcePromises.push(SOURCES[source].fetch().catch(() => []));
-    sourceNames.push(source);
-  }
-
-  const results = await Promise.allSettled(sourcePromises);
-  let allNews = [];
-
-  results.forEach((result, i) => {
-    const key = sourceNames[i];
-    if (result.status === 'fulfilled') {
-      const articles = result.value || [];
-      console.log(`[Source] ${key}: ${articles.length} articles`);
-      cacheHandler.trackSource(key, { count: articles.length });
-      allNews = allNews.concat(articles);
-    } else {
-      console.error(`[Source] ${key}: FAILED - ${result.reason?.message}`);
-      cacheHandler.trackSource(key, { error: result.reason?.message || 'Fetch failed' });
-    }
-  });
-
-  // Cross-source deduplication
-  const before = allNews.length;
-  allNews = deduplicateArticles(allNews);
-  if (before !== allNews.length) console.log(`[API] Deduplicated: ${before} → ${allNews.length}`);
-
-  // Sort newest first and normalize fields
-  allNews.sort((a, b) => new Date(b.date) - new Date(a.date));
-  allNews = allNews.map(article => ({
-    ...article,
-    tags: [...new Set([...(article.tags || []), article.source.toLowerCase().replace(/\s+/g, '-')])],
-    excerpt: article.excerpt || '',
-    image: article.image || '',
-    date: article.date || new Date().toISOString()
-  }));
-
-  return allNews;
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -183,9 +91,13 @@ function sendResponse(res, news, source, sort, limit, offset, startTime, fromDat
   const responseTime = Date.now() - startTime;
   const hasMore = offset + limit < total;
 
+  // ETag generation
+  const etag = `"${Buffer.from(JSON.stringify({ total, source, sort, limit, offset })).toString('base64url')}"`;
+
   res.setHeader('Content-Type', 'application/json');
   res.setHeader('Cache-Control', 'public, max-age=300');
   res.setHeader('X-Response-Time', `${responseTime}ms`);
+  res.setHeader('ETag', etag);
 
   res.json({
     success: true,
@@ -232,6 +144,13 @@ module.exports = async (req, res) => {
   Object.entries(CORS_HEADERS).forEach(([k, v]) => res.setHeader(k, v));
   if (req.method === 'OPTIONS') { res.status(204).end(); return; }
 
+  // HEAD requests return headers only
+  if (req.method === 'HEAD') {
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Cache-Control', 'public, max-age=300');
+    return res.status(200).end();
+  }
+
   try {
     // ─── Parse query parameters ───
     const limit = Math.min(Math.max(parseInt(req.query.limit) || DEFAULT_LIMIT, 1), MAX_LIMIT);
@@ -275,17 +194,8 @@ module.exports = async (req, res) => {
       return res.status(400).json({ success: false, error: 'Invalid to date', message: 'Use ISO format: YYYY-MM-DD', timestamp: new Date().toISOString() });
     }
 
-    // ─── Cache check ───
-    const cacheKey = `news_${source}`;
-    if (!forceRefresh) {
-      const cached = cacheHandler.get(cacheKey);
-      if (cached && cached.length > 0) return sendResponse(res, cached, source, sort, limit, offset, startTime, fromDate, toDate);
-    } else {
-      cacheHandler.del(cacheKey);
-    }
-
     // ─── Fetch from sources ───
-    const allNews = await fetchFromSources(source);
+    const allNews = await fetchCached(source, forceRefresh);
     if (allNews.length === 0) {
       return res.status(503).json({
         success: false,
@@ -295,7 +205,6 @@ module.exports = async (req, res) => {
       });
     }
 
-    cacheHandler.set(cacheKey, allNews, 600);
     sendResponse(res, allNews, source, sort, limit, offset, startTime, fromDate, toDate);
   } catch (error) {
     console.error('[API] Error:', error);

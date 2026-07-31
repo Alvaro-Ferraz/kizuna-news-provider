@@ -12,13 +12,13 @@
  *
  * @endpoint GET /api/stream
  *
- * @version 4.1.6
+ * @version 5.0.0
  * @author  Shinei Nouzen
  * @license MIT
  * ======= • ======= • ======= • ======= • =======• =======
  */
 
-const { APP_NAME, APP_VERSION } = require('../utils/constants');
+const { APP_NAME, APP_VERSION, CACHE_KEYS } = require('../utils/constants');
 const cacheHandler = require('../utils/cacheHandler');
 
 // ══════════════════════════════════════════════════════════════
@@ -52,7 +52,7 @@ module.exports = async (req, res) => {
   res.write(`data: ${JSON.stringify({ type: 'connected', name: APP_NAME, version: APP_VERSION })}\n\n`);
 
   // ─── Event 2: Status (article count) ───
-  const cached = cacheHandler.get('news_all');
+  const cached = cacheHandler.get(CACHE_KEYS.ALL);
   const count = Array.isArray(cached) ? cached.length : 0;
   res.write(`data: ${JSON.stringify({ type: 'status', articles: count, timestamp: new Date().toISOString() })}\n\n`);
 

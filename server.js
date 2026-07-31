@@ -5,21 +5,22 @@
  *
  * @description
  *   Express server entry point. Configures middleware
- *   (CORS, security headers, rate limiting), mounts all
- *   API routes, and handles 404/error responses.
+ *   (CORS, security headers, rate limiting, request IDs),
+ *   mounts all API routes, and handles 404/error responses.
  *   Used for local development and Docker deployments.
  *
  * @exports Express app instance
  *
- * @version 4.1.6
+ * @version 5.0.0
  * @author  Shinei Nouzen
  * @license MIT
  * ======= • ======= • ======= • ======= • =======• =======
  */
 
 const express = require('express');
+const crypto = require('crypto');
 const path = require('path');
-const { APP_NAME, APP_VERSION, CORS_HEADERS } = require('./utils/constants');
+const { APP_NAME, APP_VERSION, CORS_HEADERS, RATE_LIMIT, RATE_WINDOW } = require('./utils/constants');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -35,6 +36,13 @@ app.set('trust proxy', 1);
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+
+// ---- FEATURE: Request ID middleware ----
+app.use((req, res, next) => {
+  req.id = req.headers['x-request-id'] || crypto.randomUUID();
+  res.setHeader('X-Request-Id', req.id);
+  next();
+});
 
 // ---- FEATURE: CORS middleware ----
 app.use((req, res, next) => {
@@ -60,12 +68,6 @@ app.use((req, res, next) => {
 /** @type {Map<string, {count: number, resetAt: number}>} Per-IP rate buckets */
 const rateBuckets = new Map();
 
-/** @type {number} Max requests per window */
-const RATE_LIMIT = 100;
-
-/** @type {number} Window duration in milliseconds (1 minute) */
-const RATE_WINDOW = 60 * 1000;
-
 /**
  * Extract rate limit key from request.
  * Uses X-Forwarded-For header when behind a proxy.
@@ -79,7 +81,7 @@ function getRateKey(req) {
 
 /**
  * Check and enforce rate limit for a request.
- * Sets X-RateLimit-* response headers on every request.
+ * Sets X-RateLimit-* and Retry-After response headers.
  *
  * NOTE: Returns false if rate limit exceeded (caller should
  *       short-circuit). Returns true if request is allowed.
@@ -109,6 +111,7 @@ function checkRate(req, res) {
   res.setHeader('X-RateLimit-Reset', String(resetSec));
 
   if (bucket.count > RATE_LIMIT) {
+    res.setHeader('Retry-After', String(resetSec));
     res.status(429).json({
       success: false,
       error: 'Rate limit exceeded',
@@ -139,7 +142,7 @@ app.use('/api', (req, res, next) => {
 
 // ---- FEATURE: Request logging ----
 app.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
+  console.log(`[${new Date().toISOString()}] [${req.id}] ${req.method} ${req.path}`);
   next();
 });
 
@@ -149,15 +152,23 @@ app.use((req, res, next) => {
 
 // ---- FEATURE: Route mounting ----
 app.get('/api/news', require('./api/news.js'));
+app.head('/api/news', require('./api/news.js'));
 app.get('/api/news/tags', require('./api/news/tags.js'));
+app.head('/api/news/tags', require('./api/news/tags.js'));
 app.get('/api/news/:slug', require('./api/news/[slug].js'));
+app.head('/api/news/:slug', require('./api/news/[slug].js'));
 app.get('/api/search', require('./api/search.js'));
+app.head('/api/search', require('./api/search.js'));
 app.get('/api/rss', require('./api/rss.js'));
+app.head('/api/rss', require('./api/rss.js'));
 app.get('/api/health', require('./api/health.js'));
+app.head('/api/health', require('./api/health.js'));
 app.get('/api/stats', require('./api/stats.js'));
+app.head('/api/stats', require('./api/stats.js'));
 app.get('/api/stream', require('./api/stream.js'));
 app.get('/api/openapi', require('./api/openapi.js'));
 app.get('/api/sources', require('./api/sources.js'));
+app.head('/api/sources', require('./api/sources.js'));
 
 // ---- FEATURE: Cache clear with API key auth ----
 app.post('/api/cache/clear', (req, res, next) => {
@@ -182,7 +193,7 @@ app.use((req, res) => {
 
   if (accept.includes('text/html')) {
     // Styled HTML 404 for browser requests
-    res.status(404).send(`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>404 — AniNewsAPI</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Space Grotesk',system-ui,sans-serif;background:#0a0a0f;color:#f1f5f9;display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center}a{color:#a78bfa;text-decoration:none}a:hover{text-decoration:underline}.code{font-size:6rem;font-weight:700;background:linear-gradient(135deg,#a78bfa,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1;margin-bottom:16px}p{color:#94a3b8;margin-bottom:24px;font-size:1.1rem}pre{background:#161622;border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:16px 20px;font-size:0.85rem;color:#94a3b8;text-align:left;max-width:500px;margin:0 auto;overflow-x:auto}</style></head><body><div><div class="code">404</div><p>This endpoint doesn't exist. Try the API instead:</p><pre><code>curl https://aninews.vercel.app/api/news</code></pre><br><a href="/">← Back to AniNewsAPI</a></div></body></html>`);
+    res.status(404).send(`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>404 — AniNewsAPI</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Space Grotesk',system-ui,sans-serif;background:#0a0a0f;color:#f1f5f9;display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center}a{color:#a78bfa;text-decoration:none}a:hover{text-decoration:underline}.code{font-size:6rem;font-weight:700;background:linear-gradient(135deg,#a78bfa,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1;margin-bottom:16px}p{color:#94a3b8;margin-bottom:24px;font-size:1.1rem}pre{background:#161622;border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:16px 20px;font-size:0.85rem;color:#94a3b8;text-align:left;max-width:500px;margin:0 auto;overflow-x:auto}</style></head><body><div><div class="code">404</div><p>This endpoint doesn't exist. Try the API instead:</p><pre><code>curl https://aninews.vercel.app/api/news</code></pre><br><a href="/">&larr; Back to AniNewsAPI</a></div></body></html>`);
   } else {
     // JSON 404 for API clients
     res.status(404).json({
@@ -206,19 +217,36 @@ app.use((req, res) => {
 });
 
 // ---- FEATURE: Global error handler ----
-app.use((err, req, res, next) => {
-  console.error('[Server Error]:', err);
+app.use((err, req, res, _next) => {
+  console.error(`[Server Error] [${req?.id}]:`, err);
   res.status(500).json({ success: false, error: 'Internal server error', message: err.message });
 });
 
 // ══════════════════════════════════════════════════════════════
-// SERVER START
+// SERVER START & GRACEFUL SHUTDOWN
 // ══════════════════════════════════════════════════════════════
 
 // ---- FEATURE: Startup banner ----
-app.listen(PORT, () => {
-  console.log(`\n╔════════════════════════════════════════════════════════════╗\n║           🎌 ${APP_NAME} v${APP_VERSION} 🎌\n║   Server running on http://localhost:${PORT}\n║\n║   Endpoints:\n║   • GET /api/news, /api/search, /api/rss\n║   • GET /api/news/tags, /api/news/:slug\n║   • GET /api/health, /api/stats, /api/stream\n║   • GET /api/openapi\n║   • POST /api/cache/clear\n╚════════════════════════════════════════════════════════════╝\n`);
+const server = app.listen(PORT, () => {
+  console.log(`\n╔════════════════════════════════════════════════════════════╗\n║           🎌 ${APP_NAME} v${APP_VERSION} 🎌\n║   Server running on http://localhost:${PORT}\n║\n║   Endpoints:\n║   • GET /api/news, /api/search, /api/rss\n║   • GET /api/news/tags, /api/news/:slug\n║   • GET /api/health, /api/stats, /api/stream\n║   • GET /api/openapi, /api/sources\n║   • POST /api/cache/clear\n╚════════════════════════════════════════════════════════════╝\n`);
 });
+
+// ---- FEATURE: Graceful shutdown ----
+function gracefulShutdown(signal) {
+  console.log(`\n[Server] Received ${signal}. Shutting down gracefully...`);
+  server.close(() => {
+    console.log('[Server] Closed all connections.');
+    process.exit(0);
+  });
+  // Force close after 10s
+  setTimeout(() => {
+    console.error('[Server] Forced shutdown after timeout.');
+    process.exit(1);
+  }, 10000);
+}
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
 module.exports = app;
 
