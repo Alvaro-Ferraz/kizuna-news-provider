@@ -29,7 +29,7 @@ module.exports = {
   APP_NAME: 'AniNewsAPI',
 
   /** @type {string} Semantic version — keep in sync with package.json */
-  APP_VERSION: '5.0.0',
+  APP_VERSION: '5.1.0',
 
   /** @type {string} Short description for API index and OpenAPI spec */
   APP_DESCRIPTION: 'Powerful multi-source anime news API',
@@ -60,6 +60,12 @@ module.exports = {
     CRUNCHYROLL: 'news_crunchyroll',
     ANIMEHERALD: 'news_animeherald',
     COMICBOOK: 'news_comicbook',
+    TOKYOOTAKUMODE: 'news_tokyootakumode',
+    ANIMETRENDING: 'news_animetrending',
+    ANIMEUKNEWS: 'news_animeuknews',
+    RANDOMCURIOSITY: 'news_randomcuriosity',
+    HONEYSANIME: 'news_honeysanime',
+    OTAKUNEWSNEW: 'news_otakunewsnew',
     ARTICLE_PREFIX: 'article-content-'
   },
 

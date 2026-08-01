@@ -83,7 +83,7 @@ async function run() {
     r => r.data.data?.length > 0 ? true : 'no articles');
 
   // Per-source filtering
-  for (const s of ['ann', 'crunchyroll', 'myanimelist', 'animecorner', 'otakuusa', 'animeherald', 'comicbook']) {
+  for (const s of ['ann', 'crunchyroll', 'myanimelist', 'animecorner', 'otakuusa', 'animeherald', 'comicbook', 'tokyootakumode', 'animetrending', 'animeuknews', 'randomcuriosity', 'honeysanime', 'otakunewsnew']) {
     await test(`News (${s})`, `${BASE_URL}/api/news?source=${s}&limit=2`,
       r => r.data.meta?.source === s ? true : 'source mismatch');
   }

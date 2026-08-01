@@ -25,7 +25,13 @@
   "engines": {
     "node": ">=20.x"
   },
-  "keywords": ["anime", "news", "api", "scraping", "manga"],
+  "keywords": [
+    "anime",
+    "news",
+    "api",
+    "scraping",
+    "manga"
+  ],
   "author": "Shinei Nouzen",
   "license": "MIT"
 }

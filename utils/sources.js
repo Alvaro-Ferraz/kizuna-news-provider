@@ -5,7 +5,7 @@
  *
  * @description
  *   Centralized news source registry. Single source of truth
- *   for all 7 source definitions — eliminates triple
+ *   for all 13 source definitions — eliminates triple
  *   duplication that previously existed across news.js,
  *   search.js, and rss.js.
  *
@@ -28,6 +28,12 @@ const fetchOtakuNews = require('./fetchOtakuNews');
 const fetchCrunchyroll = require('./fetchCrunchyroll');
 const fetchAnimeHerald = require('./fetchAnimeHerald');
 const fetchComicBook = require('./fetchComicBook');
+const fetchTokyoOtakuMode = require('./fetchTokyoOtakuMode');
+const fetchAnimeTrending = require('./fetchAnimeTrending');
+const fetchAnimeUKNews = require('./fetchAnimeUKNews');
+const fetchRandomCuriosity = require('./fetchRandomCuriosity');
+const fetchHoneysAnime = require('./fetchHoneysAnime');
+const fetchOtakuNewsDirect = require('./fetchOtakuNewsDirect');
 
 // ══════════════════════════════════════════════════════════════
 // SOURCE REGISTRY
@@ -45,13 +51,19 @@ const fetchComicBook = require('./fetchComicBook');
  * @type {Object.<string, {name: string, fetch: Function}>}
  */
 const SOURCES = {
-  ann:          { name: 'Anime News Network', fetch: fetchANN },
-  animecorner:  { name: 'Anime Corner',       fetch: fetchAnimeCorner },
-  myanimelist:  { name: 'MyAnimeList',         fetch: fetchMyAnimeList },
-  otakuusa:     { name: 'Otaku USA Magazine',  fetch: fetchOtakuNews },
-  crunchyroll:  { name: 'Crunchyroll',         fetch: fetchCrunchyroll },
-  animeherald:  { name: 'Anime Herald',        fetch: fetchAnimeHerald },
-  comicbook:    { name: 'Comic Book',          fetch: fetchComicBook }
+  ann:              { name: 'Anime News Network',   fetch: fetchANN },
+  animecorner:      { name: 'Anime Corner',         fetch: fetchAnimeCorner },
+  myanimelist:      { name: 'MyAnimeList',           fetch: fetchMyAnimeList },
+  otakuusa:         { name: 'Otaku USA Magazine',    fetch: fetchOtakuNews },
+  crunchyroll:      { name: 'Crunchyroll',           fetch: fetchCrunchyroll },
+  animeherald:      { name: 'Anime Herald',          fetch: fetchAnimeHerald },
+  comicbook:        { name: 'Comic Book',            fetch: fetchComicBook },
+  tokyootakumode:   { name: 'Tokyo Otaku Mode',      fetch: fetchTokyoOtakuMode },
+  animetrending:    { name: 'Anime Trending',        fetch: fetchAnimeTrending },
+  animeuknews:      { name: 'Anime UK News',         fetch: fetchAnimeUKNews },
+  randomcuriosity:  { name: 'Random Curiosity',      fetch: fetchRandomCuriosity },
+  honeysanime:      { name: "Honey's Anime",         fetch: fetchHoneysAnime },
+  otakunewsnew:     { name: 'Otaku News',            fetch: fetchOtakuNewsDirect }
 };
 
 /** @type {string[]} Array of valid source keys for validation */

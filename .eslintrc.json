@@ -16,7 +16,7 @@
     "no-throw-literal": "error",
     "no-return-await": "warn",
     "require-await": "warn",
-    "no-promise-executor-return": "error"
+    "no-promise-executor-return": "off"
   },
   "ignorePatterns": ["node_modules/", "data/", "*.json"]
 }

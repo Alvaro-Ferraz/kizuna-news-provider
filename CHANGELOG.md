@@ -4,6 +4,27 @@ All notable changes to **AniNewsAPI** will be documented in this file.
 
 ---
 
+## [5.1.0] - 2026-08-01
+
+### Added
+- **Shared image extraction utility** (`utils/extractImage.js`): Unified image extraction from RSS feed items — checks `media:thumbnail`, `enclosure`, `content:encoded`, and `description` fields in priority order with URL normalization (protocol-relative, tracking params)
+- **6 new anime news sources** (7 → 13 total):
+  - **Tokyo Otaku Mode** (`tokyootakumode`): Merchandise, anime culture, and otaku lifestyle news — 19M Facebook followers
+  - **Anime Trending** (`animetrending`): Weekly community charts, rankings, and anime news — 1.4M Facebook followers
+  - **Anime UK News** (`animeuknews`): UK/EU perspective on anime news, reviews, and home video releases — established 2004
+  - **Random Curiosity** (`randomcuriosity`): Season previews, episode reviews, and detailed anime analysis
+  - **Honey's Anime** (`honeysanime`): Music/anisong focus, VTuber news, and anime recommendations
+  - **Otaku News** (`otakunewsnew`): UK/US interviews, industry news, and cultural coverage — established UK/US editions
+- **6 new source fetcher files**: `fetchTokyoOtakuMode.js`, `fetchAnimeTrending.js`, `fetchAnimeUKNews.js`, `fetchRandomCuriosity.js`, `fetchHoneysAnime.js`, `fetchOtakuNewsDirect.js` — each with RSS primary + web scraping fallback + retry logic
+- **6 new cache keys** in `CACHE_KEYS` for new sources
+
+### Changed
+- **Source registry expanded**: `utils/sources.js` now maps 13 source keys (was 7)
+- **API index updated**: `index.js` source list now includes all 13 sources
+- **Test suite expanded**: 6 new per-source filtering tests added to `test.js`
+
+---
+
 ## [5.0.0] - 2026-07-31
 
 ### Added

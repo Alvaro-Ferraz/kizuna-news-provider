@@ -105,7 +105,13 @@ module.exports = (req, res) => {
         'Otaku USA Magazine',
         'Crunchyroll',
         'Anime Herald',
-        'Comic Book'
+        'Comic Book',
+        'Tokyo Otaku Mode',
+        'Anime Trending',
+        'Anime UK News',
+        'Random Curiosity',
+        "Honey's Anime",
+        'Otaku News'
       ],
       creator: creatorInfo.creator,
       github: creatorInfo.github,
