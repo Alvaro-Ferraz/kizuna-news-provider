@@ -10,7 +10,6 @@
  *
  * @endpoint GET /api/openapi
  *
- * @version 5.0.0
  * @author  Shinei Nouzen
  * @license MIT
  * ======= • ======= • ======= • ======= • =======• =======

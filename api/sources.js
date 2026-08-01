@@ -11,7 +11,6 @@
  *
  * @endpoint GET /api/sources
  *
- * @version 5.0.0
  * @author  Shinei Nouzen
  * @license MIT
  * ======= • ======= • ======= • ======= • =======• =======

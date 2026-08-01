@@ -14,7 +14,6 @@
  *   USER_AGENT, REQUEST_TIMEOUT, CONTENT_TIMEOUT,
  *   MAX_ARTICLES_PER_SOURCE, CORS_HEADERS, RATE_LIMIT, RATE_WINDOW
  *
- * @version 5.0.0
  * @author  Shinei Nouzen
  * @license MIT
  * ======= • ======= • ======= • ======= • =======• =======

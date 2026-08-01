@@ -12,7 +12,6 @@
  *   get, set, del, flush, getStats,
  *   trackSource, getSourceMetrics, refresh
  *
- * @version 5.0.0
  * @author  Shinei Nouzen
  * @license MIT
  * ======= • ======= • ======= • ======= • =======• =======

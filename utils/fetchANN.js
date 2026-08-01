@@ -10,7 +10,6 @@
  *
  * @exports fetchANN(retries)
  *
- * @version 5.0.0
  * @author  Shinei Nouzen
  * @license MIT
  * ======= • ======= • ======= • ======= • =======• =======

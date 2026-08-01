@@ -11,7 +11,6 @@
  *
  * @exports Express app instance
  *
- * @version 5.0.0
  * @author  Shinei Nouzen
  * @license MIT
  * ======= • ======= • ======= • ======= • =======• =======
