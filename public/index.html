@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>AniNewsAPI | Real-time Anime Headlines</title>
-  <meta name="description" content="Real-time anime news API aggregating 7+ sources with smart caching, tag filtering, search, and RSS feeds.">
+  <meta name="description" content="Real-time anime news API aggregating 13+ sources with smart caching, tag filtering, search, and RSS feeds.">
   <meta name="keywords" content="anime, news, api, manga, crunchyroll, myanimelist, aninews, anime news api, rest api">
   <meta name="author" content="Shinei Nouzen">
   <meta name="robots" content="index, follow">
@@ -23,14 +23,14 @@
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
     "name": "AniNewsAPI",
-    "description": "Real-time anime news API aggregating 7+ sources with smart caching, tag filtering, search, and RSS feeds.",
+    "description": "Real-time anime news API aggregating 13+ sources with smart caching, tag filtering, search, and RSS feeds.",
     "url": "https://aninews.vercel.app",
     "image": "https://aninews.vercel.app/og-image.png",
     "applicationCategory": "DeveloperApplication",
     "operatingSystem": "Any",
     "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
     "author": { "@type": "Person", "name": "Shinei Nouzen", "url": "https://github.com/Shineii86" },
-    "softwareVersion": "4.0.0",
+    "softwareVersion": "5.1.0",
     "license": "https://opensource.org/licenses/MIT"
   }
   </script>
@@ -39,7 +39,7 @@
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://aninews.vercel.app">
   <meta property="og:title" content="AniNewsAPI | Real-time Anime Headlines">
-  <meta property="og:description" content="A powerful, serverless API aggregating anime news from 7 sources — with smart caching, keyword search, RSS feeds, and full-article extraction.">
+  <meta property="og:description" content="A powerful, serverless API aggregating anime news from 13 sources — with smart caching, keyword search, RSS feeds, and full-article extraction.">
   <meta property="og:image" content="https://aninews.vercel.app/og-image.png">
   <meta property="og:image:secure_url" content="https://aninews.vercel.app/og-image.png">
   <meta property="og:image:type" content="image/png">
@@ -54,7 +54,7 @@
   <meta name="twitter:domain" content="aninews.vercel.app">
   <meta name="twitter:url" content="https://aninews.vercel.app">
   <meta name="twitter:title" content="AniNewsAPI | Real-time Anime Headlines">
-  <meta name="twitter:description" content="A powerful, serverless API aggregating anime news from 7 sources — with smart caching, keyword search, RSS feeds, and full-article extraction.">
+  <meta name="twitter:description" content="A powerful, serverless API aggregating anime news from 13 sources — with smart caching, keyword search, RSS feeds, and full-article extraction.">
   <meta name="twitter:image" content="https://aninews.vercel.app/og-image.png">
   <meta name="twitter:image:alt" content="AniNewsAPI — Real-time Anime News Aggregation API">
   <meta name="twitter:site" content="@shineii86">
@@ -1244,7 +1244,7 @@
     <div class="container">
       <div class="hero-badge">
         <span class="dot"></span>
-        <span id="hero-version">v3.0.0</span> — 7 sources, 60+ articles
+        <span id="hero-version">v5.1.0</span> — 13 sources, 150+ articles
       </div>
 
       <h1>
@@ -1253,7 +1253,7 @@
       </h1>
 
       <p class="hero-sub">
-        Aggregate live headlines from ANN, Crunchyroll, MyAnimeList, Anime Corner, Otaku USA, Anime Herald &amp; Comic Book — with smart caching, search, and RSS.
+        Aggregate live headlines from ANN, Crunchyroll, MyAnimeList, Anime Corner, Otaku USA, Anime Herald, Comic Book, Tokyo Otaku Mode, Anime Trending, Anime UK News, Random Curiosity, Honey's Anime &amp; Otaku News — with smart caching, search, and RSS.
       </p>
 
       <div class="hero-actions">
@@ -1304,7 +1304,7 @@
           <div class="stat-label">Version</div>
         </div>
         <div class="stat-cell">
-          <div class="stat-number emerald">7</div>
+          <div class="stat-number emerald">13</div>
           <div class="stat-label">Sources</div>
         </div>
       </div>
@@ -1343,7 +1343,7 @@
         <div class="feature-card">
           <div class="feature-icon fi-amber"><i class="fas fa-globe"></i></div>
           <h3>Multi-Source</h3>
-          <p>Aggregate 7 sources or filter individually: <code>?source=crunchyroll</code>, <code>?source=ann</code>.</p>
+          <p>Aggregate 13 sources or filter individually: <code>?source=crunchyroll</code>, <code>?source=ann</code>.</p>
         </div>
         <div class="feature-card">
           <div class="feature-icon fi-rose"><i class="fas fa-search"></i></div>
@@ -1546,7 +1546,7 @@
     <div class="container">
       <div class="section-header">
         <span class="section-label">Sources</span>
-        <h2>7 Aggregated Sources</h2>
+        <h2>13 Aggregated Sources</h2>
         <p>Curated anime news from the most trusted publishers</p>
       </div>
       <div class="sources-grid">
@@ -1605,6 +1605,54 @@
             <span>comicbook</span>
           </div>
           <span class="source-method">Scrape</span>
+        </div>
+        <div class="source-card">
+          <div class="source-logo fi-pink"><i class="fas fa-shopping-bag"></i></div>
+          <div class="source-info">
+            <h4>Tokyo Otaku Mode</h4>
+            <span>tokyootakumode</span>
+          </div>
+          <span class="source-method">RSS</span>
+        </div>
+        <div class="source-card">
+          <div class="source-logo fi-cyan"><i class="fas fa-chart-line"></i></div>
+          <div class="source-info">
+            <h4>Anime Trending</h4>
+            <span>animetrending</span>
+          </div>
+          <span class="source-method">RSS</span>
+        </div>
+        <div class="source-card">
+          <div class="source-logo fi-emerald"><i class="fas fa-flag"></i></div>
+          <div class="source-info">
+            <h4>Anime UK News</h4>
+            <span>animeuknews</span>
+          </div>
+          <span class="source-method">RSS</span>
+        </div>
+        <div class="source-card">
+          <div class="source-logo fi-amber"><i class="fas fa-random"></i></div>
+          <div class="source-info">
+            <h4>Random Curiosity</h4>
+            <span>randomcuriosity</span>
+          </div>
+          <span class="source-method">RSS</span>
+        </div>
+        <div class="source-card">
+          <div class="source-logo fi-rose"><i class="fas fa-music"></i></div>
+          <div class="source-info">
+            <h4>Honey's Anime</h4>
+            <span>honeysanime</span>
+          </div>
+          <span class="source-method">RSS</span>
+        </div>
+        <div class="source-card">
+          <div class="source-logo fi-violet"><i class="fas fa-globe"></i></div>
+          <div class="source-info">
+            <h4>Otaku News</h4>
+            <span>otakunewsnew</span>
+          </div>
+          <span class="source-method">RSS</span>
         </div>
       </div>
     </div>
@@ -1715,7 +1763,7 @@
         const pkgResp = await fetch(`https://raw.githubusercontent.com/${REPO}/main/package.json`);
         if (pkgResp.ok) {
           const pkg = await pkgResp.json();
-          stats.version = 'v' + (pkg.version || '4.0');
+          stats.version = 'v' + (pkg.version || '5.1');
         }
       } catch (_) {}
 
@@ -1733,7 +1781,7 @@
         try { localStorage.setItem(CACHE_KEY, JSON.stringify(stats)); } catch (_) {}
       } else if (!cached) {
         // No cache, no network — show fallbacks
-        applyStats({ stars: '300+', forks: '45+', version: 'v4.0', contributors: '45+' });
+        applyStats({ stars: '300+', forks: '45+', version: 'v5.1', contributors: '45+' });
       }
 
       // ── Live Article Preview ──

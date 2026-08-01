@@ -5,7 +5,7 @@
  *
  * @description
  *   Main news endpoint. Returns paginated, sorted, filtered
- *   articles from all 7 sources with date range filtering,
+ *   articles from all 13 sources with date range filtering,
  *   cursor-based pagination, and cross-source deduplication.
  *
  * @endpoint GET /api/news

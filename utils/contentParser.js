@@ -5,7 +5,7 @@
  *
  * @description
  *   Full-article content extraction using Cheerio. Handles
- *   site-specific selectors for all 7 news sources plus a
+ *   site-specific selectors for all 13 news sources plus a
  *   generic fallback. Used by the /api/news/:slug endpoint
  *   to return readable article content.
  *

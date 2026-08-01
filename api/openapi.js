@@ -41,7 +41,7 @@ module.exports = (req, res) => {
     info: {
       title: 'AniNewsAPI',
       version: APP_VERSION,
-      description: 'Real-time anime news aggregation API with smart caching, search, RSS feeds, and full-article extraction from 7 sources.',
+      description: 'Real-time anime news aggregation API with smart caching, search, RSS feeds, and full-article extraction from 13 sources.',
       contact: { name: 'Shinei Nouzen', url: 'https://github.com/Shineii86', email: 'ikx7a@hotmail.com' },
       license: { name: 'MIT', url: 'https://opensource.org/licenses/MIT' }
     },

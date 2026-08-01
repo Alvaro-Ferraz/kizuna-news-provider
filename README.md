@@ -21,13 +21,13 @@
   <img src="https://img.shields.io/badge/Express-5.1-000000?style=flat-square&logo=express&logoColor=white" alt="Express"/>
   <img src="https://img.shields.io/badge/Vercel-Serverless-000000?style=flat-square&logo=vercel&logoColor=white" alt="Vercel"/>
   <img src="https://img.shields.io/badge/License-MIT-22c55e?style=flat-square&logo=mit&logoColor=white" alt="License"/>
-  <img src="https://img.shields.io/badge/Version-5.0.0-f43f8e?style=flat-square&logoColor=white" alt="Version"/>
-  <img src="https://img.shields.io/badge/Sources-7-a855f7?style=flat-square&logoColor=white" alt="Sources"/>
+  <img src="https://img.shields.io/badge/Version-5.1.0-f43f8e?style=flat-square&logoColor=white" alt="Version"/>
+  <img src="https://img.shields.io/badge/Sources-13-a855f7?style=flat-square&logoColor=white" alt="Sources"/>
   <img src="https://img.shields.io/badge/Endpoints-12-6366f1?style=flat-square&logoColor=white" alt="Endpoints"/>
 </p>
 
 <p align="center">
-  <b>A serverless API aggregating anime news from 7 sources in real-time.</b><br/>
+  <b>A serverless API aggregating anime news from 13 sources in real-time.</b><br/>
   Smart caching, keyword search, RSS feeds, date filtering, cursor pagination, and source health monitoring.<br/>
   Built for speed, reliability, and the anime community.
 </p>
@@ -72,13 +72,13 @@
 
 ## 🌸 Overview
 
-**AniNewsAPI** is a serverless anime news aggregation API that scrapes, deduplicates, and serves articles from **7 major anime news sources** — all through a clean REST API with zero database setup.
+**AniNewsAPI** is a serverless anime news aggregation API that scrapes, deduplicates, and serves articles from **13 major anime news sources** — all through a clean REST API with zero database setup.
 
 > 💡 No database, no auth for reads, no complex setup. Just deploy to Vercel and you have a production API.
 
 ### Why AniNewsAPI?
 
-- 📰 **7 Sources** — ANN, MAL, Crunchyroll, Anime Corner, Otaku USA, Anime Herald, Comic Book
+- 📰 **13 Sources** — ANN, MAL, Crunchyroll, Anime Corner, Otaku USA, Anime Herald, Comic Book, Tokyo Otaku Mode, Anime Trending, Anime UK News, Random Curiosity, Honey's Anime, Otaku News
 - ⚡ **Smart Caching** — Two-tier cache (memory + disk) with 10-minute TTL, survives serverless cold starts
 - 🔍 **Full-Text Search** — Relevance-scored search across titles, excerpts, sources, and tags
 - 🗞️ **RSS Feeds** — Standards-compliant RSS 2.0 for any feed reader
@@ -98,7 +98,7 @@ flowchart TD
     A["🌐 Client Request<br/>(Browser / App / curl)"] --> B["🛡️ Vercel Edge / Express Server<br/>CORS · Security Headers · Rate Limiting"]
     B --> C{"💾 Cache Check<br/>(node-cache + disk)"}
     C -- HIT --> D["⚡ Return Cached Response<br/>~200ms"]
-    C -- MISS --> E["📰 7 Concurrent Fetchers"]
+    C -- MISS --> E["📰 13 Concurrent Fetchers"]
 
     E --> E1["ANN"]
     E --> E2["MAL"]
@@ -107,8 +107,14 @@ flowchart TD
     E --> E5["Otaku USA"]
     E --> E6["Anime Herald"]
     E --> E7["Comic Book"]
+    E --> E8["Tokyo Otaku Mode"]
+    E --> E9["Anime Trending"]
+    E --> E10["Anime UK News"]
+    E --> E11["Random Curiosity"]
+    E --> E12["Honey's Anime"]
+    E --> E13["Otaku News"]
 
-    E1 & E2 & E3 & E4 & E5 & E6 & E7 --> F["🔄 RSS / Google News RSS / Web Scraping<br/>3 retries · 15s timeout · exponential backoff"]
+    E1 & E2 & E3 & E4 & E5 & E6 & E7 & E8 & E9 & E10 & E11 & E12 & E13 --> F["🔄 RSS / Google News RSS / Web Scraping<br/>3 retries · 15s timeout · exponential backoff"]
     F --> G["🧹 Deduplicate · Enrich · Cache"]
     G --> H["📤 Respond<br/>JSON · RSS 2.0 XML · SSE"]
 
@@ -131,7 +137,7 @@ flowchart TD
     <td>
 
 ### ⚡ Core
-- **Real-time scraping** from 7 anime news sources
+- **Real-time scraping** from 13 anime news sources
 - **Smart caching** with 10-minute TTL + disk backup
 - **Concurrent fetching** — all sources hit simultaneously
 - **Retry logic** — 3 attempts per source with exponential backoff
@@ -180,7 +186,7 @@ flowchart TD
 
 | Feature | Description | Status |
 |:---|:---|:---:|
-| 📰 7 News Sources | ANN, MAL, Crunchyroll, Anime Corner, Otaku USA, Anime Herald, Comic Book | ✅ |
+| 📰 13 News Sources | ANN, MAL, Crunchyroll, Anime Corner, Otaku USA, Anime Herald, Comic Book, Tokyo Otaku Mode, Anime Trending, Anime UK News, Random Curiosity, Honey's Anime, Otaku News | ✅ |
 | ⚡ Smart Caching | Two-tier (memory + disk) with 10-min TTL | ✅ |
 | 🔍 Full-Text Search | Relevance scoring — title (10pts) vs excerpt (3pts) | ✅ |
 | 📄 Article Extraction | Full content parsing from original URLs | ✅ |
@@ -213,8 +219,14 @@ flowchart TD
 | **Crunchyroll** | `crunchyroll` | Google News RSS | ~15 | [crunchyroll.com/news](https://www.crunchyroll.com/news) |
 | **Anime Herald** | `animeherald` | RSS Feed | ~10 | [animeherald.com](https://www.animeherald.com/) |
 | **Comic Book** | `comicbook` | Direct Scraping | ~10 | [comicbook.com/anime](https://comicbook.com/anime/) |
+| **Tokyo Otaku Mode** | `tokyootakumode` | RSS Feed | ~10 | [otakumode.com](https://otakumode.com/) |
+| **Anime Trending** | `animetrending` | RSS Feed | ~10 | [anitrendz.net](https://anitrendz.net/) |
+| **Anime UK News** | `animeuknews` | RSS + OG Images | ~12 | [animeuknews.net](https://animeuknews.net/) |
+| **Random Curiosity** | `randomcuriosity` | RSS Feed | ~10 | [randomc.net](https://randomc.net/) |
+| **Honey's Anime** | `honeysanime` | RSS Feed | ~12 | [honeysanime.com](https://honeysanime.com/) |
+| **Otaku News** | `otakunewsnew` | RSS + OG Images | ~12 | [otakunews.com](https://www.otakunews.com/) |
 
-> **Total: 60+ unique articles** after cross-source deduplication
+> **Total: 150+ unique articles** after cross-source deduplication
 
 ### Adding a New Source
 
@@ -261,7 +273,7 @@ flowchart TD
 | 1 | **Client** | Browser, app, or `curl` sends request |
 | 2 | **Vercel Edge / Express** | Routes request, applies CORS + security headers + rate limit |
 | 3 | **Cache Check** | `node-cache` with 10-min TTL — hit = instant response |
-| 4 | **Fetch Sources** | 7 concurrent scrapers (3 retries each, 15s timeout) |
+| 4 | **Fetch Sources** | 13 concurrent scrapers (3 retries each, 15s timeout) |
 | 5 | **Deduplicate** | Cross-source dedup by normalized title |
 | 6 | **Enrich & Respond** | Filter, paginate, sort, format → JSON/RSS/SSE |
 
@@ -273,7 +285,7 @@ flowchart TD
     B -- HIT --> C["⚡ Return Cached<br/>~200ms"]
     B -- MISS --> D{"💾 Disk Cache<br/>(JSON files)"}
     D -- HIT --> E["🔄 Promote to Memory<br/>Return"]
-    D -- MISS --> F["📰 Fetch from 7 Sources<br/>(concurrent)"]
+    D -- MISS --> F["📰 Fetch from 13 Sources<br/>(concurrent)"]
     F --> G["💾 Cache Result<br/>(memory + disk)"]
     G --> H["📤 Return Fresh"]
 
@@ -300,6 +312,12 @@ flowchart TD
 | Crunchyroll | Google News RSS | Direct scraping | Blocks direct scraping |
 | Anime Herald | RSS Feed | Direct scraping | RSS has real descriptions |
 | Comic Book | Direct scraping | RSS Feed | Uses subheadline selector |
+| Tokyo Otaku Mode | RSS Feed | Direct scraping | Merchandise & culture news |
+| Anime Trending | RSS Feed | Direct scraping | Images in content:encoded |
+| Anime UK News | RSS + OG Images | Direct scraping | UK/EU perspective |
+| Random Curiosity | RSS Feed | Direct scraping | Images in description |
+| Honey's Anime | RSS Feed | Direct scraping | Music/anisong focus |
+| Otaku News | RSS + OG Images | Direct scraping | UK/US interviews |
 
 ---
 
@@ -808,17 +826,17 @@ The `Dockerfile` includes:
 | Metric | Value |
 |:---|:---|
 | ⚡ Cached response | ~200ms |
-| 🔄 Fresh fetch (all 7 sources) | ~3-6s |
+| 🔄 Fresh fetch (all 13 sources) | ~3-6s |
 | 💾 Cache TTL | 10 minutes |
 | 🔁 Retry attempts | 3 per source |
 | ⏱️ Timeout per source | 15 seconds |
-| 📰 Total articles (avg) | 60+ after dedup |
+| 📰 Total articles (avg) | 150+ after dedup |
 | 📦 Total codebase | ~50KB |
 
 ### Optimization Features
 
 - 💾 **Two-tier cache** — Memory-first with disk fallback
-- ⚡ **Concurrent fetching** — All 7 sources hit simultaneously
+- ⚡ **Concurrent fetching** — All 13 sources hit simultaneously
 - 🔄 **Exponential backoff** — 1s, 2s, 3s delays on retry
 - 🧹 **Auto-cleanup** — Stale rate limit buckets purged every 5 min
 - 📁 **Disk persistence** — Source metrics survive serverless cold starts
@@ -830,6 +848,7 @@ The `Dockerfile` includes:
 
 | Version | Date | Key Changes |
 |:---|:---|:---|
+| **5.1.0** | 2026-08-01 | 6 new sources (13 total), shared image extraction utility |
 | **5.0.0** | 2026-07-31 | Shared fetch module, Docker, HEAD support, request IDs, ESLint, version sync |
 | **4.2.2** | 2026-05-28 | TOS/Privacy route restoration |
 | **4.2.0** | 2026-05-28 | Code style overhaul — AlisaReactionBot-style documentation |
@@ -884,7 +903,7 @@ curl http://localhost:3000/api/health
 <details>
 <summary><b>🔄 How often does the data refresh?</b></summary>
 <br/>
-The cache TTL is 10 minutes by default. After that, the next request triggers a fresh fetch from all 7 sources. You can force a refresh with <code>?refresh=true</code> or change the TTL with the <code>CACHE_TTL</code> environment variable.
+The cache TTL is 10 minutes by default. After that, the next request triggers a fresh fetch from all 13 sources. You can force a refresh with <code>?refresh=true</code> or change the TTL with the <code>CACHE_TTL</code> environment variable.
 </details>
 
 <details>
@@ -914,7 +933,7 @@ When <code>CACHE_CLEAR_KEY</code> is set, the endpoint requires an <code>X-Api-K
 <details>
 <summary><b>⏱️ Why is the first request slow?</b></summary>
 <br/>
-On serverless (Vercel), the first request after idle triggers a "cold start" — the function initializes and fetches from all 7 sources (~3-6s). Subsequent requests hit the cache (~200ms). Warm functions stay alive for ~5 minutes.
+On serverless (Vercel), the first request after idle triggers a "cold start" — the function initializes and fetches from all 13 sources (~3-6s). Subsequent requests hit the cache (~200ms). Warm functions stay alive for ~5 minutes.
 </details>
 
 <details>
@@ -942,7 +961,7 @@ Yes! Use <code>npm start</code> to run the Express server on any VPS, Docker con
 
 ### ✅ Completed
 
-- [x] 📰 7 news sources with concurrent fetching
+- [x] 📰 13 news sources with concurrent fetching
 - [x] 💾 Two-tier caching (memory + disk)
 - [x] 🔍 Full-text search with relevance scoring
 - [x] 📅 Date range filtering
@@ -963,6 +982,9 @@ Yes! Use <code>npm start</code> to run the Express server on any VPS, Docker con
 - [x] 📋 ESLint configuration for code quality
 - [x] 🔄 Retry-After header on 429 responses
 - [x] 📌 Centralized CACHE_KEYS constants
+- [x] 📰 6 additional sources (Tokyo Otaku Mode, Anime Trending, Anime UK News, Random Curiosity, Honey's Anime, Otaku News)
+- [x] 🖼️ Shared image extraction utility (extractImage.js)
+- [x] 🔧 ESLint false-positive fix (no-promise-executor-return)
 
 ---
 
@@ -1071,6 +1093,12 @@ git push origin feature/amazing-feature
 | [Crunchyroll](https://www.crunchyroll.com/news) | Official streaming platform news |
 | [Anime Herald](https://www.animeherald.com/) | Anime news, reviews & editorials |
 | [Comic Book](https://comicbook.com/anime/) | Anime & manga coverage at ComicBook |
+| [Tokyo Otaku Mode](https://otakumode.com/) | Anime culture & merchandise news |
+| [Anime Trending](https://anitrendz.net/) | Weekly community charts & rankings |
+| [Anime UK News](https://animeuknews.net/) | UK/EU anime news & reviews |
+| [Random Curiosity](https://randomc.net/) | Season previews & episode reviews |
+| [Honey's Anime](https://honeysanime.com/) | Music/anisong & VTuber news |
+| [Otaku News](https://www.otakunews.com/) | UK/US interviews & industry news |
 
 ### 🛠️ Technologies
 

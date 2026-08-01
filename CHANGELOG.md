@@ -22,6 +22,13 @@ All notable changes to **AniNewsAPI** will be documented in this file.
 - **Source registry expanded**: `utils/sources.js` now maps 13 source keys (was 7)
 - **API index updated**: `index.js` source list now includes all 13 sources
 - **Test suite expanded**: 6 new per-source filtering tests added to `test.js`
+- **README.md**: Updated source count, source list, mermaid diagrams, feature table, performance stats, acknowledgements, roadmap
+- **public/index.html**: Updated meta tags, JSON-LD, hero badge, stats, feature cards, source grid (added 6 new source cards)
+- **public/tos.html**: Updated source list in Description of Service
+- **public/privacy.html**: Added privacy links for 6 new sources
+- **api/news.js, api/openapi.js, api/sources.js, utils/contentParser.js**: Updated source count in comments
+- **package.json, package-lock.json**: Version bumped to 5.1.0
+- **.eslintrc.json**: Disabled `no-promise-executor-return` (false positive on setTimeout in promise executors)
 
 ---
 

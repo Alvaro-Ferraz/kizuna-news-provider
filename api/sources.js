@@ -29,7 +29,7 @@ const cacheHandler = require('../utils/cacheHandler');
 /**
  * Main request handler for GET /api/sources.
  *
- * Runs lightweight health checks for all 7 sources in parallel.
+ * Runs lightweight health checks for all 13 sources in parallel.
  * Each source is fetched to measure:
  *   - Health status (healthy / degraded)
  *   - Article count
