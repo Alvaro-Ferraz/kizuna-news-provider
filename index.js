@@ -19,6 +19,7 @@
 const fs = require('fs');
 const path = require('path');
 const { APP_NAME, APP_VERSION, APP_DESCRIPTION } = require('./utils/constants');
+const { creatorInfo } = require('./utils/creatorInfo');
 
 // ══════════════════════════════════════════════════════════════
 // IN-MEMORY LANDING PAGE CACHE
@@ -106,6 +107,9 @@ module.exports = (req, res) => {
         'Anime Herald',
         'Comic Book'
       ],
+      creator: creatorInfo.creator,
+      github: creatorInfo.github,
+      telegram: creatorInfo.telegram,
       timestamp: new Date().toISOString()
     });
   } catch (error) {

@@ -20,6 +20,7 @@ const express = require('express');
 const crypto = require('crypto');
 const path = require('path');
 const { APP_NAME, APP_VERSION, CORS_HEADERS, RATE_LIMIT, RATE_WINDOW } = require('./utils/constants');
+const { addCreatorInfo } = require('./utils/creatorInfo');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -57,6 +58,9 @@ app.use((req, res, next) => {
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   next();
 });
+
+// ---- FEATURE: Creator info injection ----
+app.use(addCreatorInfo);
 
 // ══════════════════════════════════════════════════════════════
 // IN-MEMORY RATE LIMITER
