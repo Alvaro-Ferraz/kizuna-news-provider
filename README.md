@@ -98,23 +98,9 @@ flowchart TD
     A["🌐 Client Request<br/>(Browser / App / curl)"] --> B["🛡️ Vercel Edge / Express Server<br/>CORS · Security Headers · Rate Limiting"]
     B --> C{"💾 Cache Check<br/>(node-cache + disk)"}
     C -- HIT --> D["⚡ Return Cached Response<br/>~200ms"]
-    C -- MISS --> E["📰 13 Concurrent Fetchers"]
+    C -- MISS --> E["📰 13 Concurrent Fetchers<br/>ANN · MAL · Crunchyroll · Anime Corner<br/>Otaku USA · Anime Herald · Comic Book<br/>Tokyo Otaku Mode · Anime Trending<br/>Anime UK News · Random Curiosity<br/>Honey's Anime · Otaku News"]
 
-    E --> E1["ANN"]
-    E --> E2["MAL"]
-    E --> E3["Crunchyroll"]
-    E --> E4["Anime Corner"]
-    E --> E5["Otaku USA"]
-    E --> E6["Anime Herald"]
-    E --> E7["Comic Book"]
-    E --> E8["Tokyo Otaku Mode"]
-    E --> E9["Anime Trending"]
-    E --> E10["Anime UK News"]
-    E --> E11["Random Curiosity"]
-    E --> E12["Honey's Anime"]
-    E --> E13["Otaku News"]
-
-    E1 & E2 & E3 & E4 & E5 & E6 & E7 & E8 & E9 & E10 & E11 & E12 & E13 --> F["🔄 RSS / Google News RSS / Web Scraping<br/>3 retries · 15s timeout · exponential backoff"]
+    E --> F["🔄 RSS / Google News RSS / Web Scraping<br/>3 retries · 15s timeout · exponential backoff"]
     F --> G["🧹 Deduplicate · Enrich · Cache"]
     G --> H["📤 Respond<br/>JSON · RSS 2.0 XML · SSE"]
 
