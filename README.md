@@ -1,3 +1,26 @@
+# Kizuna News Provider
+
+Private news acquisition service for Kizuna, based on AniNewsAPI.
+
+**Status:** NEWS 01B.1 - fork baseline.
+
+This fork is not production-ready and is not integrated with Kizuna. Its
+upstream public endpoints are legacy surfaces, not the final Kizuna contract.
+Security, private transport, source-contract, and extraction changes are planned
+for NEWS 01B.2 through NEWS 01B.4. See [NOTICE.md](NOTICE.md) for attribution and
+[docs/FORK_BASELINE.md](docs/FORK_BASELINE.md) for the exact audited baseline,
+source policy, known debts, and roadmap.
+
+Planned V1 sources are Anime News Network, Anime Corner, Anime Trending, and
+Crunchyroll. The other upstream fetchers are preserved for future review and are
+not planned for V1 enablement.
+
+## Upstream / legacy documentation
+
+The documentation below is preserved from AniNewsAPI for baseline knowledge. It
+describes upstream behavior and does not make that behavior a production Kizuna
+contract.
+
 > [!NOTE]
 > **API MAYBE Temporarily Paused** due to suspiciously too many requests. My hosted version of this API is only for testing purposes. You MUST host your own instance to use the API.
 

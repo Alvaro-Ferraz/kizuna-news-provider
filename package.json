@@ -7,7 +7,8 @@
     "dev": "node server.js",
     "build": "echo 'Build complete'",
     "start": "NODE_ENV=production node server.js",
-    "test": "node test.js",
+    "test": "node --require ./test/network-guard.js --test test/*.test.js",
+    "test:live": "node scripts/live-smoke.js",
     "lint": "eslint . --ignore-pattern 'node_modules/' --ignore-pattern 'data/'",
     "lint:fix": "eslint . --fix --ignore-pattern 'node_modules/' --ignore-pattern 'data/'"
   },

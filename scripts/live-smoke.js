@@ -16,8 +16,19 @@
  * ======= • ======= • ======= • ======= • =======• =======
  */
 
+/*
+ * LIVE NETWORK TEST. DO NOT RUN IN ORDINARY CI.
+ * This script exercises upstream providers and requires explicit opt-in.
+ */
+if (process.env.ALLOW_LIVE_PROVIDER_TESTS !== 'true') {
+  console.error(
+    'Live provider tests are disabled. Set ALLOW_LIVE_PROVIDER_TESTS=true to run them explicitly.',
+  );
+  process.exit(1);
+}
+
 const axios = require('axios');
-const { APP_VERSION } = require('./utils/constants');
+const { APP_VERSION } = require('../utils/constants');
 
 /** @type {string} Base URL for API requests (env override for CI) */
 const BASE_URL = process.env.API_URL || 'http://localhost:3000';
