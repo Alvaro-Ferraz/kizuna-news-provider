@@ -102,6 +102,8 @@ normal review. Do not force-push or auto-merge upstream.
 - NEWS 01B.5 - self-host readiness
 - NEWS 01C - Kizuna integration
 
-NEWS 01B.1 and NEWS 01B.2 are complete. NEWS 01B.3 implements the four bounded
-V1 direct-feed adapters; the next phase is NEWS 01B.4 article extraction
-hardening and is intentionally not part of discovery.
+NEWS 01B.1 through NEWS 01B.4 are complete. Discovery uses the four bounded V1
+direct-feed adapters and now issues signed, cache-independent references for
+the separate hardened text-only extraction command. NEWS 01B.5 self-host
+readiness remains the next phase; no deployment or Kizuna integration is part
+of this baseline document.

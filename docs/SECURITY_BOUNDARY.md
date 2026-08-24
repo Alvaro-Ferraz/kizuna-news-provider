@@ -5,6 +5,8 @@ does not inherit Kizuna identity.
 
 - Internal routes require an independent bearer secret from
   `KIZUNA_NEWS_PROVIDER_SECRET` (minimum 32 printable characters).
+- Discovery signs stateless article references with the separately rotatable
+  `KIZUNA_NEWS_ARTICLE_REF_SECRET`; the HMAC token never replaces machine auth.
 - Better Auth sessions, cookies, user JWTs, and Kizuna application credentials
   are neither parsed nor accepted.
 - CORS is absent. Browser preflight receives no special handling and no
@@ -31,6 +33,19 @@ does not inherit Kizuna identity.
 - Disposable memory cache state holds validators, freshness, the last valid
   normalized items, and in-flight coalescing. Repeated failures open a short
   process-local circuit; restart safely loses this optimization.
+- Article extraction accepts only a signed opaque reference. It repeats exact
+  article-host, HTTPS, DNS/public-address, pinning, and redirect validation at
+  every hop; caller-selected destinations are impossible.
+- Article requests have a 15-second attempt timeout inside a 20-second total
+  deadline, two attempts only for transient failures, three redirects, and a
+  2 MiB decompressed HTML ceiling. HTML/XHTML are the only accepted types.
+- Extraction admits at most two operations globally and one request per host,
+  coalesces identical in-flight references, fails excess work with `429`, and
+  uses a separate three-failure/one-minute process-local circuit.
+- Cheerio parses only the main response and loads no subresources. Provider
+  selectors remove executable/noise elements and produce at most 80,000 plain
+  text characters plus text-only semantic blocks. Raw HTML is never returned,
+  persisted, cached, or logged.
 
 ## Deployment expectations
 
@@ -39,15 +54,20 @@ Kizuna backend and operators, inject secrets through the deployment platform,
 and rotate the provider secret independently. Do not expose internal routes via
 a public browser origin.
 
-## Deliberately deferred debt
+## Remaining debt
 
 Discovery-side direct feeds, DNS/pinning, redirect validation, conditional GET,
 freshness, provider-aware retry, concurrency, circuit breaking, decompressed
 response bounds, and XML hardening are implemented in NEWS 01B.3.
 
-NEWS 01B.4 still owns signed `articleRef`, independent article URL validation,
+NEWS 01B.4 resolves signed `articleRef`, independent article URL validation,
 article DNS/pinning and redirect controls, private/reserved address rejection,
-article response bounds, HTML parser hardening, clean `contentText`, optional
-structured text blocks, and provider-specific article selectors. Discovery
-controls do not authorize article fetching, and no arbitrary-URL extraction
-endpoint may be mounted before those separate controls exist.
+article response bounds, HTML-to-text parsing, structured blocks, extraction
+capacity/circuit controls, and four provider-specific selector fixtures.
+
+The service is still not production-ready. NEWS 01B.5 owns hosting/runtime
+measurement, deployment configuration, telemetry, operational secret handling,
+and bounded live smoke. Provider policy remains an independent gate: current
+Kizuna audit evidence blocks automated Crunchyroll acquisition and requires
+review/clarification before automated ANN article retrieval. Technical
+capability is not authorization to send production traffic.

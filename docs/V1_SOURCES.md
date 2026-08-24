@@ -1,15 +1,16 @@
 # V1 discovery sources
 
-NEWS 01B.3 implements discovery only. These fixed endpoints are code-owned and
+NEWS 01B.3 implements discovery and NEWS 01B.4 adds hardened, text-only article
+extraction. These fixed endpoints and article host allowlists are code-owned and
 cannot be replaced through environment variables or caller input. No adapter
 fetches article pages, returns article bodies, or exposes raw RSS/XML.
 
-| Key | Display name | Method | Feed | Identity | Language / locale | Validators and freshness | Fallback |
+| Key | Display name | Method | Feed | Identity | Language / locale | Extraction / selector | Fallback |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `ann` | Anime News Network | `DIRECT_RSS` | `https://www.animenewsnetwork.com/news/rss.xml?ann-edition=us` | RSS GUID, then canonical source URL | `en` / `en-US` | `Last-Modified`; advertised `Cache-Control: max-age=14400` is honored; 10-minute local fallback freshness if no signal | none |
-| `animecorner` | Anime Corner | `DIRECT_RSS` | `https://animecorner.me/feed/` | RSS GUID, then canonical source URL | `en` / `en-US` | ETag, Last-Modified, and Cache-Control when advertised; otherwise 10-minute local freshness | none |
-| `animetrending` | Anime Trending | `DIRECT_RSS` | `https://anitrendz.net/news/feed/` | RSS GUID, then canonical source URL | `en` / `en-US` | ETag, Last-Modified, and Cache-Control when advertised; otherwise 10-minute local freshness | none; canonical URL removes the known happy-path redirect |
-| `crunchyroll` | Crunchyroll | `DIRECT_RSS` | `https://cr-news-api-service.prd.crunchyrollsvc.com/v1/pt-BR/rss` | RSS GUID across locales, then canonical source URL | `pt` / `pt-BR` | no validators were observed; 10-minute disposable local freshness | `https://cr-news-api-service.prd.crunchyrollsvc.com/v1/en-US/rss` (`en` / `en-US`) only after a primary failure |
+| `ann` | Anime News Network | `DIRECT_RSS` | `https://www.animenewsnetwork.com/news/rss.xml?ann-edition=us` | RSS GUID, then canonical source URL | `en` / `en-US` | supported / `ann-v1` | none |
+| `animecorner` | Anime Corner | `DIRECT_RSS` | `https://animecorner.me/feed/` | RSS GUID, then canonical source URL | `en` / `en-US` | supported / `animecorner-v1` | none |
+| `animetrending` | Anime Trending | `DIRECT_RSS` | `https://anitrendz.net/news/feed/` | RSS GUID, then canonical source URL | `en` / `en-US` | supported / `animetrending-v1` | none; canonical URL removes the known happy-path redirect |
+| `crunchyroll` | Crunchyroll | `DIRECT_RSS` | `https://cr-news-api-service.prd.crunchyrollsvc.com/v1/pt-BR/rss` | RSS GUID across locales, then canonical source URL | `pt` / `pt-BR` | technically supported / `crunchyroll-v1`; production policy blocked | `https://cr-news-api-service.prd.crunchyrollsvc.com/v1/en-US/rss` (`en` / `en-US`) only after a primary failure |
 
 ## Provider behavior
 
@@ -99,8 +100,9 @@ grouping.
 
 ## Known limitations
 
-Cache, source health, semaphores, and circuits are process-local and reset on
-restart. Live feed structure and validators may change; fixture tests establish
-the supported shape, not an eternal upstream contract. Article extraction,
-signed `articleRef`, article SSRF/redirect/DNS controls, article byte limits,
-HTML selectors, `contentText`, and structured blocks remain NEWS 01B.4.
+Cache, source health, semaphores, extraction metrics, and circuits are
+process-local and reset on restart. Live feed and article DOM structures may
+change; synthetic fixtures establish the explicitly supported shape, not an
+eternal upstream contract. A missing provider-specific root fails closed with
+`ARTICLE_LAYOUT_UNSUPPORTED`; no generic V1 fallback runs. See
+[ARTICLE_EXTRACTION.md](ARTICLE_EXTRACTION.md).

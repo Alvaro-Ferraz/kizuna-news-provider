@@ -1,7 +1,7 @@
 {
   "name": "kizuna-news-provider",
   "version": "5.1.0",
-  "description": "Private, server-to-server news discovery provider for Kizuna",
+  "description": "Private, server-to-server news discovery and extraction provider for Kizuna",
   "main": "server.js",
   "scripts": {
     "dev": "node server.js",

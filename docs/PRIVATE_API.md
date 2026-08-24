@@ -1,6 +1,7 @@
 # Private API contract
 
-This document describes schema version 1 of the Kizuna News Provider boundary.
+This document describes discovery schema version 2 and article-extraction
+schema version 1 of the Kizuna News Provider boundary.
 All responses are JSON. Internal routes send `Cache-Control: no-store` and do
 not support browser CORS.
 
@@ -36,7 +37,7 @@ per-source outcomes; failure of every enabled source returns
 
 ```text
 {
-  schemaVersion: 1,
+  schemaVersion: 2,
   serviceVersion: string,
   fetchedAt: ISO-8601 UTC instant,
   articles: SourceArticle[],
@@ -48,11 +49,12 @@ per-source outcomes; failure of every enabled source returns
 
 ```text
 {
-  schemaVersion: 1,
+  schemaVersion: 2,
   providerKey: "ann" | "animecorner" | "animetrending" | "crunchyroll",
   sourceDisplayName: string,
   providerArticleId: string | null,
   providerSlug: string | null,
+  articleRef: opaque signed string,
   title: string,
   excerpt: string | null,
   publishedAt: ISO-8601 UTC instant | null,
@@ -66,7 +68,10 @@ per-source outcomes; failure of every enabled source returns
 }
 ```
 
-`providerSlug` is temporary legacy metadata, not identity or a Kizuna URL.
+Discovery was deliberately bumped from schema version 1 to 2 because adding a
+required `articleRef` to the strict `SourceArticle` shape is a breaking contract
+change. No Kizuna client exists yet. `providerSlug` is temporary legacy
+metadata, not identity or a Kizuna URL.
 Invalid or absent dates become `null`. HTML is reduced to plain text. Exact
 duplicates are removed only within one provider using `providerArticleId`, then
 the exact normalized `sourceUrl`; equal titles from distinct providers remain.
@@ -150,14 +155,64 @@ the boundary.
 }
 ```
 
-Stable codes currently include `UNAUTHORIZED`, `INVALID_REQUEST`,
+Stable codes include `UNAUTHORIZED`, `INVALID_REQUEST`,
 `INVALID_JSON`, `UNSUPPORTED_MEDIA_TYPE`, `PAYLOAD_TOO_LARGE`,
 `ALL_SOURCES_FAILED`, `NOT_FOUND`, and `INTERNAL_ERROR`. Provider/library errors
 and stack traces never cross the boundary.
 
-## Future: `POST /internal/v1/article-extractions`
+## `POST /internal/v1/article-extractions`
 
-**NOT IMPLEMENTED — NEWS 01B.4.** No route is mounted in this phase. Its future
-input will be a provider-issued, signed `articleRef`; arbitrary caller-supplied
-URLs will not be accepted. SSRF-safe DNS, redirect, address-range, byte-limit,
-and content parsing controls must land before this route exists.
+Extracts one article from a provider-issued reference. The request must be JSON
+and has exactly one field:
+
+```json
+{"articleRef":"opaque.signed.value"}
+```
+
+The caller cannot supply a URL, provider, hostname, selector, timeout, redirect
+count, or any other operational value. Machine Bearer authentication and a
+valid, unexpired `articleRef` are both required.
+
+Synthetic response shape:
+
+```json
+{
+  "schemaVersion": 1,
+  "serviceVersion": "5.1.0",
+  "extractedAt": "2026-08-24T12:00:00.000Z",
+  "article": {
+    "providerKey": "ann",
+    "providerArticleId": "synthetic-id",
+    "sourceUrl": "https://www.animenewsnetwork.com/news/example/.1",
+    "finalUrl": "https://www.animenewsnetwork.com/news/example/.1",
+    "canonicalUrl": "https://www.animenewsnetwork.com/news/example/.1",
+    "title": "Synthetic article title",
+    "author": null,
+    "publishedAt": "2026-08-24T10:00:00.000Z",
+    "language": "en",
+    "selectorVersion": "ann-v1",
+    "contentText": "First synthetic paragraph.\n\nSecond synthetic paragraph.",
+    "blocks": [
+      {"type":"paragraph","text":"First synthetic paragraph."},
+      {"type":"paragraph","text":"Second synthetic paragraph."}
+    ],
+    "warnings": ["AUTHOR_NOT_FOUND"]
+  }
+}
+```
+
+The API never echoes `articleRef` and never returns HTML, DOM, image URLs,
+embedded content, scripts, styles, link destinations, or subresource data.
+Nullable metadata remains `null`; invalid dates never become the current time.
+
+Stable extraction errors include `INVALID_ARTICLE_REF`,
+`INVALID_ARTICLE_REF_VERSION`, `ARTICLE_REF_EXPIRED`,
+`ARTICLE_PROVIDER_NOT_ENABLED`, `ARTICLE_URL_REJECTED`,
+`ARTICLE_DNS_REJECTED`, `ARTICLE_REDIRECT_REJECTED`, `ARTICLE_TIMEOUT`,
+`ARTICLE_RESPONSE_TOO_LARGE`, `ARTICLE_UNSUPPORTED_CONTENT_TYPE`,
+`ARTICLE_HTTP_ERROR`, `ARTICLE_CIRCUIT_OPEN`, `ARTICLE_LAYOUT_UNSUPPORTED`,
+`ARTICLE_CONTENT_EMPTY`, `ARTICLE_EXTRACTION_FAILED`, and
+`EXTRACTION_CAPACITY_EXCEEDED`. Invalid references use `422`, capacity uses
+`429`, upstream/parser failures use `502`, and the bounded timeout uses `504`.
+No upstream body, URL, DNS detail, library message, stack, token, or secret is
+included in the error envelope.

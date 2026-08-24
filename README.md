@@ -4,19 +4,20 @@ Private backend-to-backend news discovery service for Kizuna. This fork is based
 on [AniNewsAPI](https://github.com/Shineii86/AniNewsAPI) by Shinei Nouzen and
 retains its MIT license and attribution in [NOTICE.md](NOTICE.md).
 
-**Status:** NEWS 01B.3 — V1 discovery providers implemented. It is not yet wired
-into the Kizuna application and is not production-ready. Safe article
-extraction remains NEWS 01B.4, self-host readiness is NEWS 01B.5, and Kizuna
-integration is NEWS 01C.
+**Status:** NEWS 01B.4 — V1 article extraction hardened. It is not yet wired
+into the Kizuna application and remains **NOT PRODUCTION READY**. Self-host
+readiness is NEWS 01B.5 and Kizuna integration is NEWS 01C.
 
 The runtime surface is intentionally small:
 
 - `GET /health` — public process liveness only;
 - `POST /internal/v1/discovery-runs` — authenticated discovery command;
+- `POST /internal/v1/article-extractions` — authenticated extraction from one
+  signed, opaque `articleRef`;
 - `GET /internal/v1/sources/health` — authenticated in-memory health snapshot.
 
 There is no landing page, browser API, CORS support, public news/search/RSS
-endpoint, cache-clear endpoint, or mounted article-extraction route.
+endpoint, arbitrary-URL extractor, or cache-clear endpoint.
 
 The four V1 sources use bounded direct RSS discovery. ANN and Crunchyroll no
 longer use Google News, Anime Trending uses its canonical trailing-slash feed,
@@ -32,9 +33,11 @@ npm ci
 cp .env.example .env
 ```
 
-Set `KIZUNA_NEWS_PROVIDER_SECRET` to an independent, printable secret of at
-least 32 characters. In production, `ENABLED_SOURCES` is also mandatory and may
-contain only `ann`, `animecorner`, `animetrending`, and `crunchyroll`.
+Set `KIZUNA_NEWS_PROVIDER_SECRET` and the independently rotatable
+`KIZUNA_NEWS_ARTICLE_REF_SECRET` to distinct printable secrets of at least 32
+characters. No runtime default exists. In production, `ENABLED_SOURCES` is also
+mandatory and may contain only `ann`, `animecorner`, `animetrending`, and
+`crunchyroll`.
 
 ```bash
 npm start
@@ -57,6 +60,8 @@ separate, explicit provider-network smoke test and requires
 `ALLOW_LIVE_PROVIDER_TESTS=true` plus the machine secret.
 
 See [docs/PRIVATE_API.md](docs/PRIVATE_API.md) for the wire contract,
+[docs/ARTICLE_EXTRACTION.md](docs/ARTICLE_EXTRACTION.md) for extraction limits
+and selector versions,
 [docs/SECURITY_BOUNDARY.md](docs/SECURITY_BOUNDARY.md) for trust boundaries and
 known debt, [docs/V1_SOURCES.md](docs/V1_SOURCES.md) for discovery behavior, and
 [docs/FORK_BASELINE.md](docs/FORK_BASELINE.md) for fork history.
