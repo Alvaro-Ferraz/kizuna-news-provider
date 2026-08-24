@@ -36,6 +36,7 @@ const RSS_CONTENT_TYPES = Object.freeze([
   'application/atom+xml',
 ]);
 const ARTICLE_CONTENT_TYPES = Object.freeze(['text/html', 'application/xhtml+xml']);
+const ARTICLE_JSON_CONTENT_TYPES = Object.freeze(['application/json']);
 const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
 const RETRYABLE_STATUSES = new Set([429, 500, 502, 503, 504]);
 
@@ -357,6 +358,44 @@ function createProviderHttpClient(options = {}) {
       }
       throw lastError;
     },
+    async getArticleJson({ url, allowedHosts, deadlineAt }) {
+      const operationDeadline = deadlineAt || now() + settings.operationDeadlineMs;
+      const headers = {
+        Accept: 'application/json',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'User-Agent': USER_AGENT,
+      };
+
+      let lastError;
+      for (let attempt = 1; attempt <= settings.maximumAttempts; attempt += 1) {
+        try {
+          const response = await oneAttempt(url, {
+            allowedHosts,
+            headers,
+            acceptedContentTypes: ARTICLE_JSON_CONTENT_TYPES,
+            allowNotModified: false,
+          }, operationDeadline);
+          return { ...response, attemptCount: attempt };
+        } catch (error) {
+          lastError = asProviderError(error);
+          lastError.attemptCount = attempt;
+          if (!lastError.retryable || attempt === settings.maximumAttempts) throw lastError;
+
+          const backoff = Math.round(200 * (2 ** (attempt - 1)) * (0.5 + random()));
+          const delay = lastError.retryAfterMs === null ? backoff : lastError.retryAfterMs;
+          if (delay >= operationDeadline - now()) {
+            const deadlineError = new ProviderError('PROVIDER_DEADLINE_EXCEEDED', {
+              retryable: true,
+              cause: lastError,
+            });
+            deadlineError.attemptCount = attempt;
+            throw deadlineError;
+          }
+          await sleep(delay);
+        }
+      }
+      throw lastError;
+    },
     settings: Object.freeze({ ...settings }),
   };
 }
@@ -376,6 +415,7 @@ function getDefaultArticleHttpClient() {
 module.exports = {
   ARTICLE_CONTENT_TYPES,
   ARTICLE_DEFAULTS,
+  ARTICLE_JSON_CONTENT_TYPES,
   DEFAULTS,
   RSS_CONTENT_TYPES,
   USER_AGENT,

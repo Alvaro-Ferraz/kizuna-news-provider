@@ -38,10 +38,16 @@ does not inherit Kizuna identity.
   every hop; caller-selected destinations are impossible.
 - Article requests have a 15-second attempt timeout inside a 20-second total
   deadline, two attempts only for transient failures, three redirects, and a
-  2 MiB decompressed HTML ceiling. HTML/XHTML are the only accepted types.
+  2 MiB decompressed response ceiling. Canonical pages accept only HTML/XHTML.
+  A recognized Crunchyroll Next.js shell may fetch JSON from the fixed official
+  News API host using a locale and full slug derived from the verified page URL;
+  it retains the same DNS, pinning, redirect, deadline, and size controls.
 - Extraction admits at most two operations globally and one request per host,
   coalesces identical in-flight references, fails excess work with `429`, and
-  uses a separate three-failure/one-minute process-local circuit.
+  uses a separate three-failure/one-minute process-local circuit. Only timeout,
+  deadline, transport/network, and selected upstream `5xx` failures feed it;
+  deterministic reference, security-policy, HTTP, content, and parser/layout
+  failures do not alter provider availability state.
 - Cheerio parses only the main response and loads no subresources. Provider
   selectors remove executable/noise elements and produce at most 80,000 plain
   text characters plus text-only semantic blocks. Raw HTML is never returned,

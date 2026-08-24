@@ -44,19 +44,27 @@ following checks immediately before every connection and redirect hop:
 
 Article HTTP settings are a 15-second per-attempt timeout inside a 20-second
 operation deadline, at most two attempts, and a 2 MiB body ceiling counted
-after Axios gzip/deflate/Brotli decompression. Only `text/html` and
-`application/xhtml+xml` are accepted. `429`, selected `5xx`, and transient
-network failures may retry; `Retry-After` is honored only when it fits the total
-deadline. `403`, `404`, invalid URL/DNS/content type, oversize, and deterministic
-parser failures do not retry.
+after Axios gzip/deflate/Brotli decompression. Canonical pages accept only
+`text/html` and `application/xhtml+xml`. A recognized Crunchyroll Next.js shell
+may additionally request `application/json` from the fixed, server-owned
+Crunchyroll News API host. Its locale and full story slug are derived from the
+already verified canonical URL; caller input cannot select the host, route
+family, or content type. The same DNS validation, address pinning, redirect
+checks, deadline, retries, concurrency, and 2 MiB ceiling apply. `429`, selected
+`5xx`, and transient network failures may retry; `Retry-After` is honored only
+when it fits the total deadline. `403`, `404`, invalid URL/DNS/content type,
+oversize, and deterministic parser failures do not retry.
 
 At most two extraction operations run globally and the shared article client
 allows one external request per host. Excess distinct work fails immediately
 with `EXTRACTION_CAPACITY_EXCEEDED`; equal in-flight references coalesce. Three
-consecutive article-operation failures open a separate one-minute extraction
-circuit and do not contaminate RSS discovery state. Process-local metrics keep
-attempts, successes, failures, last success, last error, and last duration per
-provider.
+consecutive transient availability failures open a separate one-minute
+extraction circuit and do not contaminate RSS discovery state. Only timeout,
+operation deadline, network/transport, and selected upstream `5xx` failures
+count. Deterministic reference, policy, URL/DNS/redirect, content-type/size,
+layout, empty-content, parser, `403`/`404`, and rate-limit outcomes do not count.
+Process-local metrics keep attempts, successes, failures, last success, last
+error, and last duration per provider.
 
 ## Provider selectors
 
@@ -68,7 +76,8 @@ fallback is deliberately not used.
 | ANN | `ann-v1` | `#pagecontent .news-content`, `.article-content`, `.meat` | `#pagecontent h1`, `h1.news-title` | byline/`rel=author` | scoped `time[datetime]`, posted-on | encyclopedia/sidebar/share/related/forum modules plus common noise | fixture supported; policy review required for production fetch |
 | Anime Corner | `animecorner-v1` | `article .entry-content`, scoped single-post entry | entry/post `h1` | author name/`rel=author` | scoped time/entry date | Jetpack related, sharedaddy, ad/code blocks, tags/author box plus common noise | fixture supported |
 | Anime Trending | `animetrending-v1` | scoped entry/post/article content | entry/post `h1` | author name/`rel=author` | scoped time/published date | sharing, recommendations, post footer plus common noise | fixture supported |
-| Crunchyroll | `crunchyroll-v1` | owned data attribute, article body, rich text | article/data-attribute `h1` | owned author attribute/byline | scoped time/date attribute | related/share/promo/CTA modules plus common noise | fixture supported; production acquisition blocked by policy |
+| Crunchyroll historical | `crunchyroll-v1` | owned data attribute, article body, rich text | article/data-attribute `h1` | owned author attribute/byline | scoped time/date attribute | related/share/promo/CTA modules plus common noise | historical fixture retained |
+| Crunchyroll current | `crunchyroll-v2` | recognized empty Next.js `#app` shell, then `story.content.body` rich-text components | `story.content.headline` | referenced `rels[].content.component=author` | `story.content.article_date` | images, columns without rich text, cards, banners, Twitter/YouTube embeds, and unknown components | `latest/generalnews`, `announcements/announcement`, and `interviews/interviews` supported; production acquisition remains policy blocked |
 
 Common removal covers scripts, styles, noscript, iframe, SVG, canvas, forms and
 controls, object/embed, navigation, footer, aside, advertisements, newsletters,
@@ -78,6 +87,10 @@ sharing, related content, recommendations, and comments.
 
 Cheerio parses only the buffered main HTML response and does not execute
 JavaScript or load images, CSS, scripts, frames, fonts, or other subresources.
+For `crunchyroll-v2`, the extractor does not execute or return Next.js scripts.
+It reads the official story JSON through the fixed request described above and
+walks only Storyblok `richtext` nodes for paragraphs, headings, lists, and
+quotes; embedded blocks and media components are ignored.
 The selected DOM is discarded after extracting inner text from headings,
 paragraphs, list items, and blockquotes. Anchor text may remain as text, but
 `href`, image sources, styles, handlers, and all other markup are omitted.

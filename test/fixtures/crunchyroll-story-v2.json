@@ -1,0 +1,126 @@
+{
+  "story": {
+    "uuid": "11111111-1111-4111-8111-111111111111",
+    "slug": "interviews/2026/8/24/entrevista-sintetica",
+    "tag_list": ["entrevista"],
+    "content": {
+      "component": "article",
+      "article_type": "interviews",
+      "headline": "Entrevista sintética sobre produção de anime",
+      "lead": "Uma conversa editorial sintética apresenta decisões criativas e o trabalho da equipe responsável pela produção.",
+      "article_date": "2026-08-24 10:30",
+      "authors": ["22222222-2222-4222-8222-222222222222"],
+      "body": [
+        {
+          "component": "richtext",
+          "headline": "Processo criativo",
+          "content": {
+            "type": "doc",
+            "content": [
+              {
+                "type": "paragraph",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "A equipe explicou como pesquisa, roteiro e direção de arte foram combinados para construir uma identidade visual consistente."
+                  }
+                ]
+              },
+              {
+                "type": "heading",
+                "attrs": { "level": 2 },
+                "content": [
+                  { "type": "text", "text": "Pontos da entrevista" }
+                ]
+              },
+              {
+                "type": "bullet_list",
+                "content": [
+                  {
+                    "type": "list_item",
+                    "content": [
+                      {
+                        "type": "paragraph",
+                        "content": [
+                          { "type": "text", "text": "Os testes de cor começaram ainda durante a preparação dos cenários." }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "list_item",
+                    "content": [
+                      {
+                        "type": "paragraph",
+                        "content": [
+                          { "type": "text", "text": "As revisões semanais ajudaram a preservar o tom definido para cada sequência." }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "blockquote",
+                "content": [
+                  {
+                    "type": "paragraph",
+                    "content": [
+                      { "type": "text", "text": "Queríamos que cada escolha visual tivesse uma função narrativa clara." }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "component": "youtubeembed",
+          "youtube": "ignored-video-id"
+        },
+        {
+          "component": "columnswidget",
+          "items": [
+            {
+              "component": "image",
+              "image": { "filename": "https://images.example.test/ignored.jpg" }
+            },
+            {
+              "component": "richtext",
+              "content": {
+                "type": "doc",
+                "content": [
+                  {
+                    "type": "paragraph",
+                    "content": [
+                      { "type": "text", "text": "A conversa terminou com uma reflexão sintética sobre colaboração e planejamento de longo prazo." }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "component": "article_banner_panel"
+        }
+      ]
+    }
+  },
+  "rels": [
+    {
+      "uuid": "22222222-2222-4222-8222-222222222222",
+      "content": {
+        "component": "author",
+        "name": "Redação sintética"
+      }
+    },
+    {
+      "uuid": "33333333-3333-4333-8333-333333333333",
+      "content": {
+        "component": "articletype",
+        "name": "Entrevistas"
+      }
+    }
+  ]
+}

@@ -5,7 +5,10 @@ const { readFileSync } = require('node:fs');
 const path = require('node:path');
 const test = require('node:test');
 
-const { createArticleExtractionService } = require('../src/article-extraction-service');
+const {
+  countsTowardExtractionCircuit,
+  createArticleExtractionService,
+} = require('../src/article-extraction-service');
 const { createArticleRefSigner } = require('../src/article-ref');
 const { createDiscoveryService } = require('../src/discovery');
 const { SourceHealthStore } = require('../src/source-health-store');
@@ -18,6 +21,10 @@ const {
 
 const instant = new Date('2026-08-24T12:00:00.000Z');
 const html = readFileSync(path.join(__dirname, 'fixtures', 'ann-article.html'), 'utf8');
+const crunchyrollStory = readFileSync(
+  path.join(__dirname, 'fixtures', 'crunchyroll-story-v2.json'),
+  'utf8',
+);
 
 function createRef(overrides = {}) {
   const signer = createArticleRefSigner({
@@ -30,6 +37,19 @@ function createRef(overrides = {}) {
     canonicalSourceUrl: 'https://www.animenewsnetwork.com/news/example/.1',
     locale: 'en-US',
     ...overrides,
+  });
+}
+
+function createCrunchyrollRef() {
+  const signer = createArticleRefSigner({
+    secret: TEST_ARTICLE_REF_SECRET,
+    now: () => instant.getTime(),
+  });
+  return signer.sign({
+    providerKey: 'crunchyroll',
+    providerArticleId: 'crunchyroll-guid-1',
+    canonicalSourceUrl: 'https://www.crunchyroll.com/pt-br/news/interviews/2026/8/24/entrevista-sintetica',
+    locale: 'pt-BR',
   });
 }
 
@@ -130,7 +150,99 @@ test('article transport failures map to stable safe extraction codes', async () 
   }
 });
 
-test('extraction circuit opens independently after repeated article failures', async () => {
+test('only transient transport and upstream 5xx errors feed the extraction circuit', () => {
+  for (const code of [
+    'PROVIDER_TIMEOUT',
+    'PROVIDER_DEADLINE_EXCEEDED',
+    'PROVIDER_HTTP_5XX',
+    'PROVIDER_NETWORK_ERROR',
+  ]) {
+    assert.equal(countsTowardExtractionCircuit({ code }), true, code);
+  }
+  for (const code of [
+    'ARTICLE_LAYOUT_UNSUPPORTED',
+    'ARTICLE_CONTENT_EMPTY',
+    'PROVIDER_INVALID_CONTENT_TYPE',
+    'PROVIDER_INVALID_URL',
+    'PROVIDER_DNS_REJECTED',
+    'PROVIDER_DNS_FAILED',
+    'PROVIDER_REDIRECT_REJECTED',
+    'INVALID_ARTICLE_REF',
+    'ARTICLE_REF_EXPIRED',
+    'ARTICLE_PROVIDER_NOT_ENABLED',
+    'PROVIDER_RATE_LIMITED',
+    'PROVIDER_HTTP_403',
+    'PROVIDER_HTTP_ERROR',
+  ]) {
+    assert.equal(countsTowardExtractionCircuit({ code }), false, code);
+  }
+});
+
+test('current Crunchyroll Next.js shell resolves through crunchyroll-v2 Storyblok selectors', async () => {
+  const calls = [];
+  const sourceUrl = 'https://www.crunchyroll.com/pt-br/news/interviews/2026/8/24/entrevista-sintetica';
+  const service = createArticleExtractionService({
+    config: createTestConfig({ enabledSources: ['crunchyroll'] }),
+    sourceRegistry: createTestRegistry(),
+    logger: silentLogger,
+    now: () => instant,
+    httpClient: {
+      getArticle: (options) => {
+        calls.push({ method: 'html', ...options });
+        return {
+          body: '<!doctype html><html><body><div id="app"></div><script src="/news/build/_next/static/chunks/app.js"></script></body></html>',
+          finalUrl: sourceUrl,
+          attemptCount: 1,
+        };
+      },
+      getArticleJson: (options) => {
+        calls.push({ method: 'json', ...options });
+        return {
+          body: crunchyrollStory,
+          finalUrl: options.url,
+          attemptCount: 1,
+        };
+      },
+    },
+  });
+  const result = await service.extract({
+    articleRef: createCrunchyrollRef(),
+    requestId: 'crunchyroll-v2',
+  });
+  assert.equal(result.article.selectorVersion, 'crunchyroll-v2');
+  assert.equal(result.article.sourceUrl, sourceUrl);
+  assert.equal(calls.length, 2);
+  assert.equal(calls[0].method, 'html');
+  assert.equal(calls[1].method, 'json');
+  assert.deepEqual(calls[1].allowedHosts, ['cr-news-api-service.prd.crunchyrollsvc.com']);
+  assert.equal(
+    new URL(calls[1].url).searchParams.get('slug'),
+    'interviews/2026/8/24/entrevista-sintetica',
+  );
+});
+
+test('repeated ARTICLE_LAYOUT_UNSUPPORTED failures leave the extraction circuit closed', async () => {
+  let calls = 0;
+  const service = createService({
+    getArticle: () => {
+      calls += 1;
+      return {
+        body: '<html><body><div>unknown layout</div></body></html>',
+        finalUrl: 'https://www.animenewsnetwork.com/news/example/.1',
+        attemptCount: 1,
+      };
+    },
+  });
+  for (let index = 0; index < 4; index += 1) {
+    await assert.rejects(
+      () => service.extract({ articleRef: createRef(), requestId: `layout-${index}` }),
+      (error) => error.code === 'ARTICLE_LAYOUT_UNSUPPORTED',
+    );
+  }
+  assert.equal(calls, 4);
+});
+
+test('repeated transient upstream 5xx failures still open the extraction circuit', async () => {
   let calls = 0;
   const providerError = Object.assign(new Error('upstream failed'), {
     code: 'PROVIDER_HTTP_5XX',

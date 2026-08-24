@@ -196,6 +196,18 @@ test('article HTTP mode accepts only bounded HTML and uses article-specific limi
   assert.match(calls[0].headers.Accept, /text\/html/u);
 });
 
+test('article JSON mode reuses article DNS, pinning, byte, timeout, and retry limits', async () => {
+  const { calls, client } = createMockClient([
+    response(200, { 'Content-Type': 'application/json; charset=utf-8' }, '{"story":{}}'),
+  ], ARTICLE_DEFAULTS);
+  const result = await client.getArticleJson({ url: feedUrl, allowedHosts });
+  assert.equal(result.body, '{"story":{}}');
+  assert.equal(result.attemptCount, 1);
+  assert.equal(calls[0].maximumBytes, 2 * 1024 * 1024);
+  assert.equal(calls[0].timeoutMs, 15_000);
+  assert.equal(calls[0].headers.Accept, 'application/json');
+});
+
 test('article HTTP mode rejects non-HTML and oversize decompressed bodies without retry', async () => {
   for (const [mockResponse, code] of [
     [response(200, { 'Content-Type': 'application/pdf' }, 'pdf'), 'PROVIDER_INVALID_CONTENT_TYPE'],

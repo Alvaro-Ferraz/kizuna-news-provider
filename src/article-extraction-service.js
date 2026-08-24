@@ -3,14 +3,27 @@
 const crypto = require('node:crypto');
 
 const { ArticleRefError, createArticleRefSigner } = require('./article-ref');
-const { ArticleExtractionError, extractArticle } = require('./article-extractor');
+const {
+  CRUNCHYROLL_NEWS_API_HOST,
+  ArticleExtractionError,
+  createCrunchyrollStoryRequest,
+  extractArticle,
+  extractCrunchyrollStory,
+  isCrunchyrollV2Shell,
+} = require('./article-extractor');
 const { articleExtractionResponseSchema } = require('./contracts');
 const { HttpError } = require('./errors');
-const { getDefaultArticleHttpClient } = require('./provider-http-client');
+const { ARTICLE_DEFAULTS, getDefaultArticleHttpClient } = require('./provider-http-client');
 const { Semaphore } = require('./semaphore');
 
 const EXTRACTION_CIRCUIT_THRESHOLD = 3;
 const EXTRACTION_CIRCUIT_COOLDOWN_MS = 60 * 1000;
+const TRANSIENT_CIRCUIT_FAILURE_CODES = new Set([
+  'PROVIDER_TIMEOUT',
+  'PROVIDER_DEADLINE_EXCEEDED',
+  'PROVIDER_HTTP_5XX',
+  'PROVIDER_NETWORK_ERROR',
+]);
 
 const PROVIDER_ERROR_MAP = Object.freeze({
   PROVIDER_INVALID_URL: 'ARTICLE_URL_REJECTED',
@@ -69,6 +82,10 @@ function toHttpError(error) {
   return new HttpError(ERROR_STATUS[code] || 502, code, publicMessage(code));
 }
 
+function countsTowardExtractionCircuit(error) {
+  return TRANSIENT_CIRCUIT_FAILURE_CODES.has(error?.code);
+}
+
 function createArticleExtractionService({
   config,
   sourceRegistry,
@@ -102,17 +119,52 @@ function createArticleExtractionService({
 
   async function execute(payload) {
     const source = sourceRegistry[payload.providerKey];
+    const deadlineAt = Date.now() + ARTICLE_DEFAULTS.operationDeadlineMs;
     const response = await httpClient.getArticle({
       url: payload.canonicalSourceUrl,
       allowedHosts: source.allowedSourceHosts,
+      deadlineAt,
     });
-    const extracted = extractArticle({
-      providerKey: payload.providerKey,
-      html: response.body,
-      sourceUrl: payload.canonicalSourceUrl,
-      finalUrl: response.finalUrl,
-      locale: payload.locale,
-    });
+    let extracted;
+    let attemptCount = response.attemptCount || 1;
+    try {
+      extracted = extractArticle({
+        providerKey: payload.providerKey,
+        html: response.body,
+        sourceUrl: payload.canonicalSourceUrl,
+        finalUrl: response.finalUrl,
+        locale: payload.locale,
+      });
+    } catch (error) {
+      const canUseCrunchyrollV2 = payload.providerKey === 'crunchyroll'
+        && error instanceof ArticleExtractionError
+        && error.code === 'ARTICLE_LAYOUT_UNSUPPORTED'
+        && isCrunchyrollV2Shell(response.body);
+      if (!canUseCrunchyrollV2) {
+        error.attemptCount = attemptCount;
+        throw error;
+      }
+
+      const storyRequest = createCrunchyrollStoryRequest(payload.canonicalSourceUrl);
+      let storyResponse;
+      try {
+        storyResponse = await httpClient.getArticleJson({
+          url: storyRequest.url,
+          allowedHosts: [CRUNCHYROLL_NEWS_API_HOST],
+          deadlineAt,
+        });
+        attemptCount += storyResponse.attemptCount || 1;
+        extracted = extractCrunchyrollStory({
+          storyJson: storyResponse.body,
+          sourceUrl: payload.canonicalSourceUrl,
+          finalUrl: response.finalUrl,
+          locale: payload.locale,
+        });
+      } catch (storyError) {
+        storyError.attemptCount = attemptCount + (storyError.attemptCount || 0);
+        throw storyError;
+      }
+    }
     const result = articleExtractionResponseSchema.parse({
       schemaVersion: 1,
       serviceVersion: config.serviceVersion,
@@ -123,7 +175,7 @@ function createArticleExtractionService({
         ...extracted,
       },
     });
-    return { result, attemptCount: response.attemptCount || 1 };
+    return { result, attemptCount };
   }
 
   async function executeWithCircuit(payload) {
@@ -134,9 +186,11 @@ function createArticleExtractionService({
       state.circuitOpenUntil = 0;
       return completed;
     } catch (error) {
-      state.consecutiveFailures += 1;
-      if (state.consecutiveFailures >= EXTRACTION_CIRCUIT_THRESHOLD) {
-        state.circuitOpenUntil = nowDate().getTime() + EXTRACTION_CIRCUIT_COOLDOWN_MS;
+      if (countsTowardExtractionCircuit(error)) {
+        state.consecutiveFailures += 1;
+        if (state.consecutiveFailures >= EXTRACTION_CIRCUIT_THRESHOLD) {
+          state.circuitOpenUntil = nowDate().getTime() + EXTRACTION_CIRCUIT_COOLDOWN_MS;
+        }
       }
       throw error;
     }
@@ -253,6 +307,8 @@ module.exports = {
   EXTRACTION_CIRCUIT_COOLDOWN_MS,
   EXTRACTION_CIRCUIT_THRESHOLD,
   PROVIDER_ERROR_MAP,
+  TRANSIENT_CIRCUIT_FAILURE_CODES,
+  countsTowardExtractionCircuit,
   createArticleExtractionService,
   toHttpError,
 };

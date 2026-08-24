@@ -5,8 +5,11 @@ const { readFileSync } = require('node:fs');
 const path = require('node:path');
 const test = require('node:test');
 
-const { ARTICLE_EXTRACTION_DEFINITIONS } = require('../src/article-extraction-definitions');
-const { extractArticle } = require('../src/article-extractor');
+const {
+  ARTICLE_EXTRACTION_DEFINITIONS,
+  ARTICLE_EXTRACTION_SELECTOR_REGISTRY,
+} = require('../src/article-extraction-definitions');
+const { extractArticle, extractCrunchyrollStory } = require('../src/article-extractor');
 const { CONTRACT_LIMITS } = require('../src/contracts');
 
 const fixtureDirectory = path.join(__dirname, 'fixtures');
@@ -62,6 +65,41 @@ test('malicious HTML is discarded without scripts, subresource loading, links, o
   assert.equal(JSON.stringify(result).includes('evil.test'), false);
 });
 
+test('crunchyroll-v2 extracts sanitized Storyblok rich text for the current interview layout', () => {
+  const sourceUrl = 'https://www.crunchyroll.com/pt-br/news/interviews/2026/8/24/entrevista-sintetica';
+  const result = extractCrunchyrollStory({
+    storyJson: readFileSync(path.join(fixtureDirectory, 'crunchyroll-story-v2.json'), 'utf8'),
+    sourceUrl,
+    finalUrl: sourceUrl,
+    locale: 'pt-BR',
+  });
+  assert.equal(result.selectorVersion, 'crunchyroll-v2');
+  assert.equal(result.title, 'Entrevista sintética sobre produção de anime');
+  assert.equal(result.author, 'Redação sintética');
+  assert.equal(result.publishedAt, '2026-08-24T10:30:00.000Z');
+  assert.equal(result.language, 'pt-BR');
+  assert.ok(result.contentText.length >= 200);
+  assert.deepEqual(new Set(result.blocks.map((block) => block.type)), new Set([
+    'heading', 'paragraph', 'list', 'quote',
+  ]));
+  assert.equal(result.contentText.includes('ignored-video-id'), false);
+  assert.equal(result.contentText.includes('images.example.test'), false);
+  assert.equal(JSON.stringify(result).includes('<'), false);
+});
+
+test('crunchyroll-v2 fails closed when the Storyblok template is unknown', () => {
+  const payload = JSON.parse(
+    readFileSync(path.join(fixtureDirectory, 'crunchyroll-story-v2.json'), 'utf8'),
+  );
+  payload.story.content.article_type = 'unknown-template';
+  assert.throws(() => extractCrunchyrollStory({
+    storyJson: payload,
+    sourceUrl: 'https://www.crunchyroll.com/pt-br/news/interviews/2026/8/24/entrevista-sintetica',
+    finalUrl: 'https://www.crunchyroll.com/pt-br/news/interviews/2026/8/24/entrevista-sintetica',
+    locale: 'pt-BR',
+  }), /ARTICLE_LAYOUT_UNSUPPORTED/u);
+});
+
 test('V1 extraction fails closed when its provider-specific article root disappears', () => {
   assert.throws(() => extractArticle({
     providerKey: 'animetrending',
@@ -98,4 +136,8 @@ test('selector definitions are explicit for every V1 provider', () => {
     assert.ok(definition.articleRootSelectors.length > 0);
     assert.ok(definition.removeSelectors.includes('script'));
   }
+  assert.deepEqual(
+    ARTICLE_EXTRACTION_SELECTOR_REGISTRY.crunchyroll.map(({ selectorVersion }) => selectorVersion),
+    ['crunchyroll-v2', 'crunchyroll-v1'],
+  );
 });

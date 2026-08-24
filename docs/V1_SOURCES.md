@@ -10,7 +10,7 @@ fetches article pages, returns article bodies, or exposes raw RSS/XML.
 | `ann` | Anime News Network | `DIRECT_RSS` | `https://www.animenewsnetwork.com/news/rss.xml?ann-edition=us` | RSS GUID, then canonical source URL | `en` / `en-US` | supported / `ann-v1` | none |
 | `animecorner` | Anime Corner | `DIRECT_RSS` | `https://animecorner.me/feed/` | RSS GUID, then canonical source URL | `en` / `en-US` | supported / `animecorner-v1` | none |
 | `animetrending` | Anime Trending | `DIRECT_RSS` | `https://anitrendz.net/news/feed/` | RSS GUID, then canonical source URL | `en` / `en-US` | supported / `animetrending-v1` | none; canonical URL removes the known happy-path redirect |
-| `crunchyroll` | Crunchyroll | `DIRECT_RSS` | `https://cr-news-api-service.prd.crunchyrollsvc.com/v1/pt-BR/rss` | RSS GUID across locales, then canonical source URL | `pt` / `pt-BR` | technically supported / `crunchyroll-v1`; production policy blocked | `https://cr-news-api-service.prd.crunchyrollsvc.com/v1/en-US/rss` (`en` / `en-US`) only after a primary failure |
+| `crunchyroll` | Crunchyroll | `DIRECT_RSS` | `https://cr-news-api-service.prd.crunchyrollsvc.com/v1/pt-BR/rss` | RSS GUID across locales, then canonical source URL | `pt` / `pt-BR` | technically supported / historical `crunchyroll-v1`, current `crunchyroll-v2`; production policy blocked | `https://cr-news-api-service.prd.crunchyrollsvc.com/v1/en-US/rss` (`en` / `en-US`) only after a primary failure |
 
 ## Provider behavior
 
