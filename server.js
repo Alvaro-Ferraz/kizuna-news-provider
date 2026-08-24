@@ -7,7 +7,7 @@
 
 'use strict';
 
-const { createApp } = require('./src/app');
+const { createApp } = require('./src/createApp');
 const { loadConfig } = require('./src/config');
 const logger = require('./src/logger');
 

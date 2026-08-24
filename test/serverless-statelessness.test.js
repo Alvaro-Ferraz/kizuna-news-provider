@@ -7,7 +7,7 @@ const { once } = require('node:events');
 const path = require('node:path');
 const test = require('node:test');
 
-const { createApp } = require('../src/app');
+const { createApp } = require('../src/createApp');
 const { createRssProvider } = require('../src/rss-provider');
 const { createV1SourceRegistry } = require('../src/source-registry');
 const { V1_PROVIDER_DEFINITIONS } = require('../src/v1-provider-definitions');

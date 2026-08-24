@@ -48,7 +48,7 @@ npm start
 `.env` automatically. Never commit the secret or reuse a Kizuna user/session
 credential.
 
-The same `createApp()` factory powers the local/Docker listener and the lazy
+The same `createApp()` factory powers the local/Docker listener and the
 serverless entry in `app.js`. Serverless production does not require `PORT`;
 both secrets and explicit `ENABLED_SOURCES` remain mandatory. Docker remains a
 supported local and future container-hosting fallback.

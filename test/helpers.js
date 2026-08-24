@@ -2,7 +2,7 @@
 
 const { once } = require('node:events');
 
-const { createApp } = require('../src/app');
+const { createApp } = require('../src/createApp');
 const { V1_SOURCE_KEYS, V1_SOURCE_METADATA } = require('../src/source-registry');
 
 const TEST_SECRET = 'test-machine-secret-with-at-least-32-characters';

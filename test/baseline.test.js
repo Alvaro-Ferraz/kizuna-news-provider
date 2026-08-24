@@ -50,7 +50,7 @@ test('main utility modules load without starting crawling', () => {
   const blockedBeforeImport = getBlockedNetworkAttemptCount();
 
   assert.doesNotThrow(() => require('../utils/constants'));
-  assert.doesNotThrow(() => require('../src/app'));
+  assert.doesNotThrow(() => require('../src/createApp'));
   assert.doesNotThrow(() => require('../server'));
   assert.equal(getBlockedNetworkAttemptCount(), blockedBeforeImport);
 });

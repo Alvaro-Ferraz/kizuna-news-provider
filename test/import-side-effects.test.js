@@ -21,7 +21,7 @@ test('importing app, config, registry, process entry, and serverless entry start
   try {
     assert.doesNotThrow(() => require('../src/config'));
     assert.doesNotThrow(() => require('../src/source-registry'));
-    assert.doesNotThrow(() => require('../src/app'));
+    assert.doesNotThrow(() => require('../src/createApp'));
     assert.doesNotThrow(() => require('../server'));
     process.env.NODE_ENV = 'production';
     process.env.ENABLED_SOURCES = 'ann';

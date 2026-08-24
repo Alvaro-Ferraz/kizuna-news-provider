@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "dev": "node server.js",
-    "build": "node --check server.js && node --check app.js && node --check src/app.js",
+    "build": "node --check server.js && node --check app.js && node --check src/createApp.js",
     "start": "node server.js",
     "benchmark:local": "node scripts/benchmark-local.js",
     "validate:live": "node scripts/live-readiness.js",

@@ -43,8 +43,8 @@ Use the Vercel dashboard only after the eligibility gate passes:
 2. Use the repository root as **Root Directory**; this is not a monorepo.
 3. Keep npm and the repository `package-lock.json`. The `engines.node` value
    selects Node 22.x.
-4. Use the normal framework detection. Root `app.js` exports one lazy handler
-   backed by the same Express `createApp()` as Docker/local; `vercel.json`
+4. Use the normal framework detection. Root `app.js` exports one Express
+   application backed by the same `createApp()` factory as Docker/local; `vercel.json`
    explicitly enables Fluid Compute. Do not create one function per route.
 5. Do not configure a custom domain, Vercel Cron, storage, or add-ons. Use the
    generated `*.vercel.app` production hostname.
