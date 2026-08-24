@@ -18,8 +18,8 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
 const generateSlug = require('./generateSlug');
-const dateParser = require('./dateParser');
 const { USER_AGENT, REQUEST_TIMEOUT } = require('./constants');
+const logger = require('../src/logger');
 const RSSParser = require('rss-parser');
 const rssParser = new RSSParser();
 
@@ -53,7 +53,7 @@ const ANN_GNEWS = 'https://news.google.com/rss/search?q=site:animenewsnetwork.co
  */
 async function fetchFromGoogleNews() {
   try {
-    console.log('[ANN] Fetching from Google News RSS...');
+    logger.info('provider_fetch_started', { providerKey: 'ann', method: 'GOOGLE_NEWS_RSS' });
     const feed = await rssParser.parseURL(ANN_GNEWS);
     const articles = [];
 
@@ -64,7 +64,7 @@ async function fetchFromGoogleNews() {
       // Strip " - Anime News Network" suffix from Google News titles
       const cleanTitle = title.replace(/\s*-\s*Anime News Network.*$/i, '').trim();
       const excerpt = item.contentSnippet || item.content || '';
-      const date = dateParser.parse(item.pubDate || item.isoDate, new Date());
+      const date = item.pubDate || item.isoDate || null;
 
       // Extract image from content:encoded HTML
       let image = '';
@@ -79,18 +79,20 @@ async function fetchFromGoogleNews() {
           slug: generateSlug(cleanTitle, 'ann'),
           source: 'Anime News Network',
           excerpt: excerpt,
-          date: date.toISOString(),
+          date,
           image,
           link: item.link,
-          tags
+          tags,
+          providerArticleId: null,
+          discoveryMethod: 'GOOGLE_NEWS_RSS'
         });
       }
     });
 
-    console.log(`[ANN] Found ${articles.length} articles from Google News`);
+    logger.info('provider_fetch_succeeded', { providerKey: 'ann', method: 'GOOGLE_NEWS_RSS', articleCount: articles.length });
     return articles;
   } catch (error) {
-    console.error('[ANN] Google News error:', error.message);
+    logger.error('provider_fetch_failed', { providerKey: 'ann', method: 'GOOGLE_NEWS_RSS', errorClass: error.constructor.name });
     return [];
   }
 }
@@ -105,7 +107,7 @@ async function fetchFromGoogleNews() {
  */
 async function fetchFromWeb() {
   try {
-    console.log('[ANN] Fetching from web...');
+    logger.info('provider_fetch_started', { providerKey: 'ann', method: 'DIRECT_HTML' });
     const { data } = await axios.get(ANN_URL, {
       headers: { 'User-Agent': USER_AGENT },
       timeout: REQUEST_TIMEOUT
@@ -126,7 +128,7 @@ async function fetchFromWeb() {
         const excerpt = $el.find('.preview, .excerpt, .summary').first().text().trim();
         const dateAttr = $el.find('time').attr('datetime');
         const dateText = $el.find('.byline, .date, time').first().text().trim();
-        const date = dateParser.parse(dateAttr || dateText, new Date());
+        const date = dateAttr || dateText || null;
 
         let image = $el.find('img').attr('src') || '';
         if (image.startsWith('//')) image = `https:${image}`;
@@ -146,10 +148,12 @@ async function fetchFromWeb() {
             slug: generateSlug(title, 'ann'),
             source: 'Anime News Network',
             excerpt: excerpt,
-            date: date.toISOString(),
+            date,
             image,
             link,
-            tags: tags.length > 0 ? tags : ['news', 'anime']
+            tags: tags.length > 0 ? tags : ['news', 'anime'],
+            providerArticleId: null,
+            discoveryMethod: 'DIRECT_HTML'
           });
         }
       });
@@ -157,10 +161,10 @@ async function fetchFromWeb() {
       if (articles.length > 0) break;
     }
 
-    console.log(`[ANN] Found ${articles.length} articles from web`);
+    logger.info('provider_fetch_succeeded', { providerKey: 'ann', method: 'DIRECT_HTML', articleCount: articles.length });
     return articles;
   } catch (error) {
-    console.error('[ANN] Web fetch error:', error.message);
+    logger.error('provider_fetch_failed', { providerKey: 'ann', method: 'DIRECT_HTML', errorClass: error.constructor.name });
     return [];
   }
 }
@@ -188,18 +192,18 @@ module.exports = async (retries = 2) => {
 
       // Exponential backoff before retry
       if (i < retries) {
-        console.log(`[ANN] Retry ${i + 1}/${retries}...`);
+        logger.info('provider_fetch_retry', { providerKey: 'ann', attempt: i + 1, maximumAttempts: retries });
         await new Promise(r => setTimeout(r, 1000 * (i + 1)));
       }
     } catch (error) {
-      console.error(`[ANN] Attempt ${i + 1} failed:`, error.message);
+      logger.error('provider_fetch_attempt_failed', { providerKey: 'ann', attempt: i + 1, errorClass: error.constructor.name });
       if (i < retries) {
         await new Promise(r => setTimeout(r, 1000 * (i + 1)));
       }
     }
   }
 
-  console.error('[ANN] All fetch attempts failed');
+  logger.error('provider_fetch_exhausted', { providerKey: 'ann' });
   return [];
 };
 

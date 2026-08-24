@@ -19,8 +19,8 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
 const generateSlug = require('./generateSlug');
-const dateParser = require('./dateParser');
 const { USER_AGENT, REQUEST_TIMEOUT } = require('./constants');
+const logger = require('../src/logger');
 const RSSParser = require('rss-parser');
 const rssParser = new RSSParser();
 
@@ -53,7 +53,7 @@ const CR_GNEWS = 'https://news.google.com/rss/search?q=site:crunchyroll.com%2Fne
  */
 async function fetchFromGoogleNews() {
   try {
-    console.log('[Crunchyroll] Fetching from Google News RSS...');
+    logger.info('provider_fetch_started', { providerKey: 'crunchyroll', method: 'GOOGLE_NEWS_RSS' });
     const feed = await rssParser.parseURL(CR_GNEWS);
     const articles = [];
 
@@ -64,7 +64,7 @@ async function fetchFromGoogleNews() {
       // Strip " - Crunchyroll" or " - Crunchyroll News" suffix
       const cleanTitle = title.replace(/\s*-\s*(Crunchyroll|Crunchyroll News).*$/i, '').trim();
       const excerpt = item.contentSnippet || item.content || '';
-      const date = dateParser.parse(item.pubDate || item.isoDate, new Date());
+      const date = item.pubDate || item.isoDate || null;
 
       // Extract image from content:encoded
       let image = '';
@@ -79,18 +79,20 @@ async function fetchFromGoogleNews() {
           slug: generateSlug(cleanTitle, 'crunchyroll'),
           source: 'Crunchyroll',
           excerpt: excerpt,
-          date: date.toISOString(),
+          date,
           image,
           link: item.link,
-          tags
+          tags,
+          providerArticleId: null,
+          discoveryMethod: 'GOOGLE_NEWS_RSS'
         });
       }
     });
 
-    console.log(`[Crunchyroll] Found ${articles.length} articles from Google News`);
+    logger.info('provider_fetch_succeeded', { providerKey: 'crunchyroll', method: 'GOOGLE_NEWS_RSS', articleCount: articles.length });
     return articles;
   } catch (error) {
-    console.error('[Crunchyroll] Google News error:', error.message);
+    logger.error('provider_fetch_failed', { providerKey: 'crunchyroll', method: 'GOOGLE_NEWS_RSS', errorClass: error.constructor.name });
     return [];
   }
 }
@@ -107,7 +109,7 @@ async function fetchFromGoogleNews() {
 async function fetchFromWeb(urlIndex = 0) {
   try {
     const url = CR_URLS[urlIndex];
-    console.log(`[Crunchyroll] Fetching from web (${url})...`);
+    logger.info('provider_fetch_started', { providerKey: 'crunchyroll', method: 'DIRECT_HTML', fallbackIndex: urlIndex });
     const { data } = await axios.get(url, {
       headers: { 'User-Agent': USER_AGENT },
       timeout: REQUEST_TIMEOUT
@@ -127,7 +129,7 @@ async function fetchFromWeb(urlIndex = 0) {
         const excerpt = $el.find('.description, .excerpt').first().text().trim();
         const dateAttr = $el.find('time').attr('datetime');
         const dateText = $el.find('time, .date').first().text().trim();
-        const date = dateParser.parse(dateAttr || dateText, new Date());
+        const date = dateAttr || dateText || null;
 
         let image = $el.find('img').first().attr('src') || '';
         if (image.startsWith('//')) image = `https:${image}`;
@@ -143,10 +145,12 @@ async function fetchFromWeb(urlIndex = 0) {
             slug: generateSlug(title, 'crunchyroll'),
             source: 'Crunchyroll',
             excerpt: excerpt,
-            date: date.toISOString(),
+            date,
             image,
             link,
-            tags
+            tags,
+            providerArticleId: null,
+            discoveryMethod: 'DIRECT_HTML'
           });
         }
       });
@@ -154,10 +158,10 @@ async function fetchFromWeb(urlIndex = 0) {
       if (articles.length > 0) break;
     }
 
-    console.log(`[Crunchyroll] Found ${articles.length} articles from web`);
+    logger.info('provider_fetch_succeeded', { providerKey: 'crunchyroll', method: 'DIRECT_HTML', articleCount: articles.length });
     return articles;
   } catch (error) {
-    console.error('[Crunchyroll] Web fetch error:', error.message);
+    logger.error('provider_fetch_failed', { providerKey: 'crunchyroll', method: 'DIRECT_HTML', errorClass: error.constructor.name });
     return [];
   }
 }
@@ -187,18 +191,18 @@ module.exports = async (retries = 2) => {
       if (articles.length > 0) return articles;
 
       if (i < retries) {
-        console.log(`[Crunchyroll] Retry ${i + 1}/${retries}...`);
+        logger.info('provider_fetch_retry', { providerKey: 'crunchyroll', attempt: i + 1, maximumAttempts: retries });
         await new Promise(r => setTimeout(r, 1000 * (i + 1)));
       }
     } catch (error) {
-      console.error(`[Crunchyroll] Attempt ${i + 1} failed:`, error.message);
+      logger.error('provider_fetch_attempt_failed', { providerKey: 'crunchyroll', attempt: i + 1, errorClass: error.constructor.name });
       if (i < retries) {
         await new Promise(r => setTimeout(r, 1000 * (i + 1)));
       }
     }
   }
 
-  console.error('[Crunchyroll] All fetch attempts failed');
+  logger.error('provider_fetch_exhausted', { providerKey: 'crunchyroll' });
   return [];
 };
 

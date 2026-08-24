@@ -18,8 +18,8 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
 const generateSlug = require('./generateSlug');
-const dateParser = require('./dateParser');
 const { USER_AGENT, REQUEST_TIMEOUT } = require('./constants');
+const logger = require('../src/logger');
 const RSSParser = require('rss-parser');
 const rssParser = new RSSParser();
 
@@ -49,7 +49,7 @@ const AC_RSS = 'https://animecorner.me/feed/';
  */
 async function fetchFromWeb() {
   try {
-    console.log('[AnimeCorner] Fetching from web...');
+    logger.info('provider_fetch_started', { providerKey: 'animecorner', method: 'DIRECT_HTML' });
 
     const { data } = await axios.get(AC_URL, {
       headers: {
@@ -88,10 +88,10 @@ async function fetchFromWeb() {
         // Extract date
         const dateAttr = $el.find('time').attr('datetime');
         const dateText = $el.find('.entry-date, time, .date').first().text().trim();
-        const date = dateParser.parse(dateAttr || dateText, new Date());
+        const date = dateAttr || dateText || null;
 
         // Extract image — try multiple lazy-load attributes
-        let image = $el.find('.entry-thumb img, .featured-image img, img').first().attr('src') ||
+        const image = $el.find('.entry-thumb img, .featured-image img, img').first().attr('src') ||
                    $el.find('.entry-thumb img, .featured-image img, img').first().attr('data-src') ||
                    $el.find('.entry-thumb img, .featured-image img, img').first().attr('data-lazy-src') || '';
 
@@ -111,10 +111,12 @@ async function fetchFromWeb() {
             slug: generateSlug(title, 'animecorner'),
             source: 'Anime Corner',
             excerpt: excerpt,
-            date: date.toISOString(),
+            date,
             image,
             link,
-            tags: tags.length > 0 ? tags : ['community', 'news']
+            tags: tags.length > 0 ? tags : ['community', 'news'],
+            providerArticleId: null,
+            discoveryMethod: 'DIRECT_HTML'
           });
         }
       });
@@ -122,10 +124,10 @@ async function fetchFromWeb() {
       if (articles.length > 0) break;
     }
 
-    console.log(`[AnimeCorner] Found ${articles.length} articles from web`);
+    logger.info('provider_fetch_succeeded', { providerKey: 'animecorner', method: 'DIRECT_HTML', articleCount: articles.length });
     return articles;
   } catch (error) {
-    console.error('[AnimeCorner] Web fetch error:', error.message);
+    logger.error('provider_fetch_failed', { providerKey: 'animecorner', method: 'DIRECT_HTML', errorClass: error.constructor.name });
     return [];
   }
 }
@@ -141,7 +143,7 @@ async function fetchFromWeb() {
  */
 async function fetchFromRSS() {
   try {
-    console.log('[AnimeCorner] Fetching from RSS...');
+    logger.info('provider_fetch_started', { providerKey: 'animecorner', method: 'DIRECT_RSS' });
 
     const feed = await rssParser.parseURL(AC_RSS);
     const articles = [];
@@ -149,7 +151,7 @@ async function fetchFromRSS() {
     feed.items.slice(0, 12).forEach(item => {
       const title = item.title?.trim();
       const excerpt = item.contentSnippet || '';
-      const date = dateParser.parse(item.pubDate || item.isoDate, new Date());
+      const date = item.pubDate || item.isoDate || null;
       const link = item.link;
 
       // Extract image from content:encoded HTML
@@ -168,18 +170,20 @@ async function fetchFromRSS() {
           slug: generateSlug(title, 'animecorner'),
           source: 'Anime Corner',
           excerpt: excerpt,
-          date: date.toISOString(),
+          date,
           image,
           link,
-          tags
+          tags,
+          providerArticleId: item.guid || null,
+          discoveryMethod: 'DIRECT_RSS'
         });
       }
     });
 
-    console.log(`[AnimeCorner] Found ${articles.length} articles from RSS`);
+    logger.info('provider_fetch_succeeded', { providerKey: 'animecorner', method: 'DIRECT_RSS', articleCount: articles.length });
     return articles;
   } catch (error) {
-    console.error('[AnimeCorner] RSS fetch error:', error.message);
+    logger.error('provider_fetch_failed', { providerKey: 'animecorner', method: 'DIRECT_RSS', errorClass: error.constructor.name });
     return [];
   }
 }
@@ -213,18 +217,18 @@ module.exports = async (retries = 2) => {
       }
 
       if (i < retries) {
-        console.log(`[AnimeCorner] Retry ${i + 1}/${retries}...`);
+        logger.info('provider_fetch_retry', { providerKey: 'animecorner', attempt: i + 1, maximumAttempts: retries });
         await new Promise(r => setTimeout(r, 1000 * (i + 1)));
       }
     } catch (error) {
-      console.error(`[AnimeCorner] Attempt ${i + 1} failed:`, error.message);
+      logger.error('provider_fetch_attempt_failed', { providerKey: 'animecorner', attempt: i + 1, errorClass: error.constructor.name });
       if (i < retries) {
         await new Promise(r => setTimeout(r, 1000 * (i + 1)));
       }
     }
   }
 
-  console.error('[AnimeCorner] All fetch attempts failed');
+  logger.error('provider_fetch_exhausted', { providerKey: 'animecorner' });
   return [];
 };
 

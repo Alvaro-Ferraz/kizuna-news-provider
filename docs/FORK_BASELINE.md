@@ -1,5 +1,10 @@
 # Fork baseline
 
+> NEWS 01B.2 update (2026-08-24): the audited public AniNewsAPI product surface
+> has been removed from runtime. Only private discovery/source-health routes and
+> minimal public liveness remain. The 13 upstream fetchers are still preserved;
+> only the four approved V1 identities can be enabled by the private registry.
+
 ## Snapshot
 
 | Field | Value |

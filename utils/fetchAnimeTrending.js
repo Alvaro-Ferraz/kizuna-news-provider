@@ -19,9 +19,9 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
 const generateSlug = require('./generateSlug');
-const dateParser = require('./dateParser');
 const extractImage = require('./extractImage');
 const { USER_AGENT, REQUEST_TIMEOUT } = require('./constants');
+const logger = require('../src/logger');
 const RSSParser = require('rss-parser');
 const rssParser = new RSSParser();
 
@@ -50,7 +50,7 @@ const AT_URLS = ['https://anitrendz.net/news', 'https://anitrendz.net'];
  */
 async function fetchFromRSS() {
   try {
-    console.log('[ANIMETRENDING] Fetching from RSS...');
+    logger.info('provider_fetch_started', { providerKey: 'animetrending', method: 'DIRECT_RSS' });
     const feed = await rssParser.parseURL(AT_RSS);
     const articles = [];
 
@@ -59,7 +59,7 @@ async function fetchFromRSS() {
       if (!title) return;
 
       const excerpt = item.contentSnippet || item.content || '';
-      const date = dateParser.parse(item.pubDate || item.isoDate, new Date());
+      const date = item.pubDate || item.isoDate || null;
       const image = extractImage(item);
       const tags = item.categories?.map(c => c.toLowerCase()) || ['anime', 'news'];
 
@@ -69,18 +69,20 @@ async function fetchFromRSS() {
           slug: generateSlug(title, 'animetrending'),
           source: 'Anime Trending',
           excerpt,
-          date: date.toISOString(),
+          date,
           image,
           link: item.link,
-          tags
+          tags,
+          providerArticleId: item.guid || null,
+          discoveryMethod: 'DIRECT_RSS'
         });
       }
     });
 
-    console.log(`[ANIMETRENDING] Found ${articles.length} articles from RSS`);
+    logger.info('provider_fetch_succeeded', { providerKey: 'animetrending', method: 'DIRECT_RSS', articleCount: articles.length });
     return articles;
   } catch (error) {
-    console.error('[ANIMETRENDING] RSS error:', error.message);
+    logger.error('provider_fetch_failed', { providerKey: 'animetrending', method: 'DIRECT_RSS', errorClass: error.constructor.name });
     return [];
   }
 }
@@ -97,7 +99,7 @@ async function fetchFromRSS() {
 async function fetchFromWeb(urlIndex = 0) {
   try {
     const url = AT_URLS[urlIndex];
-    console.log(`[ANIMETRENDING] Fetching from web (${url})...`);
+    logger.info('provider_fetch_started', { providerKey: 'animetrending', method: 'DIRECT_HTML', fallbackIndex: urlIndex });
     const { data } = await axios.get(url, {
       headers: { 'User-Agent': USER_AGENT },
       timeout: REQUEST_TIMEOUT
@@ -118,7 +120,7 @@ async function fetchFromWeb(urlIndex = 0) {
         const excerpt = $el.find('p, .excerpt, .summary').first().text().trim();
         const dateText = $el.find('time, .date, .published').first().text().trim()
           || $el.find('time').attr('datetime');
-        const date = dateParser.parse(dateText, new Date());
+        const date = dateText || null;
 
         let image = $el.find('img').first().attr('src') || '';
         if (image.startsWith('//')) image = `https:${image}`;
@@ -132,10 +134,12 @@ async function fetchFromWeb(urlIndex = 0) {
             slug: generateSlug(title, 'animetrending'),
             source: 'Anime Trending',
             excerpt,
-            date: date.toISOString(),
+            date,
             image,
             link: fullLink,
-            tags: ['anime', 'trending', 'charts']
+            tags: ['anime', 'trending', 'charts'],
+            providerArticleId: null,
+            discoveryMethod: 'DIRECT_HTML'
           });
         }
       });
@@ -143,10 +147,10 @@ async function fetchFromWeb(urlIndex = 0) {
       if (articles.length > 0) break;
     }
 
-    console.log(`[ANIMETRENDING] Found ${articles.length} articles from web`);
+    logger.info('provider_fetch_succeeded', { providerKey: 'animetrending', method: 'DIRECT_HTML', articleCount: articles.length });
     return articles;
   } catch (error) {
-    console.error('[ANIMETRENDING] Web fetch error:', error.message);
+    logger.error('provider_fetch_failed', { providerKey: 'animetrending', method: 'DIRECT_HTML', errorClass: error.constructor.name });
     return [];
   }
 }
@@ -176,18 +180,18 @@ module.exports = async (retries = 2) => {
       if (articles.length > 0) return articles;
 
       if (i < retries) {
-        console.log(`[ANIMETRENDING] Retry ${i + 1}/${retries}...`);
+        logger.info('provider_fetch_retry', { providerKey: 'animetrending', attempt: i + 1, maximumAttempts: retries });
         await new Promise(r => setTimeout(r, 1000 * (i + 1)));
       }
     } catch (error) {
-      console.error(`[ANIMETRENDING] Attempt ${i + 1} failed:`, error.message);
+      logger.error('provider_fetch_attempt_failed', { providerKey: 'animetrending', attempt: i + 1, errorClass: error.constructor.name });
       if (i < retries) {
         await new Promise(r => setTimeout(r, 1000 * (i + 1)));
       }
     }
   }
 
-  console.error('[ANIMETRENDING] All fetch attempts failed');
+  logger.error('provider_fetch_exhausted', { providerKey: 'animetrending' });
   return [];
 };
 
