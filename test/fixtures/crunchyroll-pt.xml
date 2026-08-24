@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:media="http://search.yahoo.com/mrss/">
+  <channel>
+    <title>Crunchyroll Notícias Sintéticas</title>
+    <language>pt-BR</language>
+    <item>
+      <guid>cr-guid-shared-001</guid>
+      <title>Projeto Aurora ganha trailer oficial</title>
+      <link>https://www.crunchyroll.com/news/latest/2026/8/24/projeto-aurora-trailer</link>
+      <pubDate>Mon, 24 Aug 2026 07:00:00 GMT</pubDate>
+      <description><![CDATA[<p>Confira o teaser sintético.</p>]]></description>
+      <content:encoded><![CDATA[<article><p>Conteúdo rico que não deve sair como corpo.</p></article>]]></content:encoded>
+      <media:content url="https://www.crunchyroll.com/img/aurora.jpg" type="image/jpeg" />
+      <category>Notícias</category>
+    </item>
+  </channel>
+</rss>

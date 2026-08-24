@@ -20,7 +20,7 @@ function validArticle(overrides = {}) {
     tags: ['anime'],
     language: null,
     locale: null,
-    discoveryMethod: 'GOOGLE_NEWS_RSS',
+    discoveryMethod: 'DIRECT_RSS',
     discoveredAt: '2026-08-24T12:00:00.000Z',
     ...overrides,
   };

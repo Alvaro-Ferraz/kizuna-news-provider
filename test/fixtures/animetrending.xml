@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:media="http://search.yahoo.com/mrss/">
+  <channel>
+    <title>Anime Trending Synthetic</title>
+    <language>en-US</language>
+    <item>
+      <guid>trending-guid-001</guid>
+      <title>Northwind Animation Shares First Visual</title>
+      <link>https://anitrendz.net/news/2026/08/24/northwind-first-visual/</link>
+      <pubDate>Mon, 24 Aug 2026 09:00:00 GMT</pubDate>
+      <description><![CDATA[<p>A bounded teaser for the visual announcement.</p>]]></description>
+      <content:encoded><![CDATA[<article><p>This rich feed field is intentionally not an article body or excerpt.</p><img src="https://anitrendz.net/media/northwind.jpg" /></article>]]></content:encoded>
+      <media:thumbnail url="https://anitrendz.net/media/northwind-thumb.jpg" />
+      <category>Anime News</category>
+    </item>
+    <item>
+      <guid>trending-guid-002</guid>
+      <title>Weekly Character Poll Opens</title>
+      <link>https://anitrendz.net/news/2026/08/24/weekly-character-poll/</link>
+      <pubDate>Mon, 24 Aug 2026 08:00:00 GMT</pubDate>
+      <description>Poll voting is now open.</description>
+      <content:encoded><![CDATA[<p>Rich field without image.</p>]]></content:encoded>
+    </item>
+  </channel>
+</rss>

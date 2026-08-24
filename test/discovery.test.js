@@ -54,7 +54,7 @@ test('discovery removes only exact duplicates inside one provider', async () => 
   const result = await service.run();
   assert.equal(result.response.articles.length, 1);
   assert.equal(result.response.sources[0].outcome, 'degraded');
-  assert.deepEqual(result.response.sources[0].warnings, ['DUPLICATE_ARTICLE_FILTERED']);
+  assert.deepEqual(result.response.sources[0].warnings, ['DUPLICATE_ITEM_DROPPED']);
 });
 
 test('invalid date becomes null while invalid articles are filtered', async () => {
@@ -74,7 +74,17 @@ test('invalid date becomes null while invalid articles are filtered', async () =
   assert.equal(result.response.articles[0].publishedAt, null);
   assert.equal(result.response.articles[0].excerpt, 'Safe');
   assert.equal(result.response.sources[0].outcome, 'degraded');
-  assert.ok(result.response.sources[0].warnings.includes('INVALID_ARTICLE_FILTERED'));
+  assert.ok(result.response.sources[0].warnings.includes('INVALID_ITEM_DROPPED'));
+  assert.ok(result.response.sources[0].warnings.includes('INVALID_DATE_DROPPED'));
+});
+
+test('missing or invalid image metadata never invalidates an otherwise valid article', async () => {
+  const { service } = createService({
+    animecorner: () => [createRawArticle('animecorner', { image: 'http://unsafe.test/image.jpg' })],
+  }, ['animecorner']);
+  const result = await service.run();
+  assert.equal(result.response.articles.length, 1);
+  assert.equal(result.response.articles[0].imageUrl, null);
 });
 
 test('partial failures keep successful articles and update health independently', async () => {
@@ -122,6 +132,53 @@ test('legacy empty results are marked as ambiguous degradation', async () => {
   const result = await service.run();
   assert.equal(result.response.sources[0].outcome, 'degraded');
   assert.deepEqual(result.response.sources[0].warnings, ['LEGACY_EMPTY_RESULT_AMBIGUOUS']);
+});
+
+test('structured provider outcomes retain stable errors and health freshness metadata', async () => {
+  let shouldFail = true;
+  const sourceRegistry = createTestRegistry({
+    ann: () => (shouldFail
+      ? {
+        articles: [],
+        outcome: 'failed',
+        warnings: [],
+        errorCode: 'PROVIDER_TIMEOUT',
+        attemptCount: 3,
+        cacheStatus: 'miss',
+        freshUntil: null,
+      }
+      : {
+        articles: [createRawArticle('ann')],
+        outcome: 'healthy',
+        warnings: [],
+        errorCode: null,
+        attemptCount: 1,
+        cacheStatus: 'not_modified',
+        freshUntil: '2026-08-24T16:00:00.000Z',
+      }),
+  });
+  const healthStore = new SourceHealthStore([sourceRegistry.ann]);
+  const service = createDiscoveryService({
+    config: createTestConfig({ enabledSources: ['ann'] }),
+    sourceRegistry,
+    healthStore,
+    logger: silentLogger,
+    now: () => new Date('2026-08-24T12:00:00.000Z'),
+  });
+
+  assert.equal((await service.run()).response.sources[0].errorCode, 'PROVIDER_TIMEOUT');
+  assert.equal(healthStore.read()[0].consecutiveFailures, 1);
+  shouldFail = false;
+  assert.equal((await service.run()).response.sources[0].outcome, 'healthy');
+  const health = healthStore.read()[0];
+  assert.equal(health.consecutiveFailures, 0);
+  assert.equal(health.freshUntil, '2026-08-24T16:00:00.000Z');
+  assert.deepEqual(health.lastWarningCodes, []);
+  assert.equal(health.discoveryAttempts, 2);
+  assert.equal(health.upstreamAttemptCount, 4);
+  assert.equal(health.successes, 1);
+  assert.equal(health.failures, 1);
+  assert.equal(health.notModifiedCount, 1);
 });
 
 test('discovery response is reduced below the two MiB wire limit', async () => {

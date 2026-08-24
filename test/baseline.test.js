@@ -73,6 +73,16 @@ test('all planned V1 sources exist in the preserved registry', () => {
   }
 });
 
+test('V1 registry exposes only direct RSS adapters and no Google News hosts', () => {
+  const { createV1SourceRegistry } = require('../src/source-registry');
+  const registry = createV1SourceRegistry();
+  assert.deepEqual(Object.keys(registry), plannedV1SourceKeys);
+  for (const source of Object.values(registry)) {
+    assert.equal(source.discoveryMethod, 'DIRECT_RSS');
+    assert.equal(source.allowedSourceHosts.includes('news.google.com'), false);
+  }
+});
+
 test('ordinary tests reject fetch, HTTP, and HTTPS network access', async () => {
   const blockedBeforeProof = getBlockedNetworkAttemptCount();
 

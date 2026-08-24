@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Anime Corner Synthetic</title>
+    <language>en-US</language>
+    <item>
+      <guid>corner-guid-001</guid>
+      <title>Studio Lantern Reveals Original Project</title>
+      <link>https://animecorner.me/studio-lantern-original-project/</link>
+      <pubDate>Mon, 24 Aug 2026 11:00:00 GMT</pubDate>
+      <description><![CDATA[<p>Short corner teaser.</p>]]></description>
+      <content:encoded><![CDATA[<p>Feed metadata.</p><img src="https://animecorner.me/media/lantern.jpg" />]]></content:encoded>
+      <category>News</category>
+    </item>
+    <item>
+      <guid>corner-guid-002</guid>
+      <title>Autumn Showcase Publishes Schedule</title>
+      <link>https://animecorner.me/autumn-showcase-schedule/</link>
+      <pubDate>Mon, 24 Aug 2026 10:00:00 GMT</pubDate>
+      <description></description>
+    </item>
+  </channel>
+</rss>
