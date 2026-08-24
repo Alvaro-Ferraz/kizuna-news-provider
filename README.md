@@ -4,9 +4,10 @@ Private backend-to-backend news discovery service for Kizuna. This fork is based
 on [AniNewsAPI](https://github.com/Shineii86/AniNewsAPI) by Shinei Nouzen and
 retains its MIT license and attribution in [NOTICE.md](NOTICE.md).
 
-**Status:** NEWS 01B.2 — private service boundary complete. It is not yet wired
-into the Kizuna application. Direct-feed provider hardening is NEWS 01B.3 and
-safe article extraction is NEWS 01B.4.
+**Status:** NEWS 01B.3 — V1 discovery providers implemented. It is not yet wired
+into the Kizuna application and is not production-ready. Safe article
+extraction remains NEWS 01B.4, self-host readiness is NEWS 01B.5, and Kizuna
+integration is NEWS 01C.
 
 The runtime surface is intentionally small:
 
@@ -16,6 +17,11 @@ The runtime surface is intentionally small:
 
 There is no landing page, browser API, CORS support, public news/search/RSS
 endpoint, cache-clear endpoint, or mounted article-extraction route.
+
+The four V1 sources use bounded direct RSS discovery. ANN and Crunchyroll no
+longer use Google News, Anime Trending uses its canonical trailing-slash feed,
+and Crunchyroll tries `pt-BR` before its bounded `en-US` fallback. See
+[docs/V1_SOURCES.md](docs/V1_SOURCES.md) for exact source and cache semantics.
 
 ## Local setup
 
@@ -52,4 +58,5 @@ separate, explicit provider-network smoke test and requires
 
 See [docs/PRIVATE_API.md](docs/PRIVATE_API.md) for the wire contract,
 [docs/SECURITY_BOUNDARY.md](docs/SECURITY_BOUNDARY.md) for trust boundaries and
-known debt, and [docs/FORK_BASELINE.md](docs/FORK_BASELINE.md) for fork history.
+known debt, [docs/V1_SOURCES.md](docs/V1_SOURCES.md) for discovery behavior, and
+[docs/FORK_BASELINE.md](docs/FORK_BASELINE.md) for fork history.

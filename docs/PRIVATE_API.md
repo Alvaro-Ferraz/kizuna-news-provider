@@ -70,12 +70,20 @@ per-source outcomes; failure of every enabled source returns
 Invalid or absent dates become `null`. HTML is reduced to plain text. Exact
 duplicates are removed only within one provider using `providerArticleId`, then
 the exact normalized `sourceUrl`; equal titles from distinct providers remain.
+All four enabled V1 adapters emit `DIRECT_RSS`; the wider discovery-method enum
+is retained for schema compatibility with the NEWS 01B.2 contract.
 
 Contract limits are 500 characters for `title`, 2,000 for `excerpt`, 2,048 for
 URLs, 500 for `providerArticleId`, 200 for `providerSlug`, 20 tags per article,
 and 100 characters per tag. Each source contributes at most 100 articles and
 the complete serialized discovery response is capped at 2 MiB. Filtering or
 truncation marks that source as degraded with a stable warning.
+
+Stable discovery warnings include `INVALID_ITEM_DROPPED`,
+`INVALID_DATE_DROPPED`, `DUPLICATE_ITEM_DROPPED`, `ITEM_LIMIT_REACHED`,
+`EXCERPT_TRUNCATED`, `FALLBACK_USED`, `LOCALE_FALLBACK_USED`,
+`STALE_CACHE_USED`, `CIRCUIT_OPEN`, and `RESPONSE_SIZE_LIMIT`. The list is
+bounded and never contains an upstream message or payload.
 
 `SourceOutcome`:
 
@@ -110,10 +118,25 @@ provider.
     lastArticleCount: integer | null,
     consecutiveFailures: integer,
     lastDurationMs: integer | null,
-    lastErrorCode: string | null
+    lastErrorCode: string | null,
+    lastWarningCodes: string[],
+    freshUntil: ISO instant | null,
+    discoveryAttempts: integer,
+    upstreamAttemptCount: integer,
+    successes: integer,
+    failures: integer,
+    cacheHitCount: integer,
+    notModifiedCount: integer,
+    lastAttemptCount: integer
   }]
 }
 ```
+
+Provider HTTP/parse errors use stable codes such as `PROVIDER_TIMEOUT`,
+`PROVIDER_RESPONSE_TOO_LARGE`, `PROVIDER_INVALID_CONTENT_TYPE`,
+`PROVIDER_INVALID_XML`, `PROVIDER_DNS_REJECTED`, and
+`PROVIDER_REDIRECT_REJECTED`. Library messages and response content never cross
+the boundary.
 
 ## Errors
 

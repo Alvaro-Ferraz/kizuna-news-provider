@@ -102,5 +102,6 @@ normal review. Do not force-push or auto-merge upstream.
 - NEWS 01B.5 - self-host readiness
 - NEWS 01C - Kizuna integration
 
-The next phase is NEWS 01B.2. It will define the private HTTP boundary and must
-not be started as part of this baseline.
+NEWS 01B.1 and NEWS 01B.2 are complete. NEWS 01B.3 implements the four bounded
+V1 direct-feed adapters; the next phase is NEWS 01B.4 article extraction
+hardening and is intentionally not part of discovery.

@@ -17,6 +17,20 @@ does not inherit Kizuna identity.
 - Logs and error responses exclude bearer values, raw provider payloads,
   library error messages, response HTML, and stack traces.
 - Health state is process-local memory; reading it never starts discovery.
+- V1 RSS traffic uses fixed HTTPS endpoints and exact host allowlists. Every DNS
+  answer must be public, one validated address is pinned for the TLS request,
+  and every manual redirect hop is revalidated (maximum three).
+- One shared outbound client enforces two requests globally, one per host, an
+  eight-second request timeout inside a 15-second provider deadline, at most
+  three total attempts, status-aware retry/`Retry-After`, and a 1 MiB
+  decompressed RSS ceiling.
+- RSS bytes are fetched before parsing. HTML content types, DTD/entity input,
+  malformed/unexpected XML, excessive item counts, and oversized fields fail or
+  degrade with stable codes. Raw XML and rich `content:encoded` never leave the
+  adapter.
+- Disposable memory cache state holds validators, freshness, the last valid
+  normalized items, and in-flight coalescing. Repeated failures open a short
+  process-local circuit; restart safely loses this optimization.
 
 ## Deployment expectations
 
@@ -27,11 +41,13 @@ a public browser origin.
 
 ## Deliberately deferred debt
 
-NEWS 01B.3 owns direct-feed migration, conditional GET, provider-aware retry,
-per-host concurrency, and circuit breaking. Upstream fetch response-size and XML
-limits also remain to be hardened.
+Discovery-side direct feeds, DNS/pinning, redirect validation, conditional GET,
+freshness, provider-aware retry, concurrency, circuit breaking, decompressed
+response bounds, and XML hardening are implemented in NEWS 01B.3.
 
-NEWS 01B.4 owns signed `articleRef`, SSRF-safe extraction, DNS resolution and
-rebinding controls, redirect-hop validation, private/reserved address rejection,
-article response byte bounds, content-type enforcement, and safe text parsing.
-No arbitrary-URL extraction endpoint may be mounted before those controls exist.
+NEWS 01B.4 still owns signed `articleRef`, independent article URL validation,
+article DNS/pinning and redirect controls, private/reserved address rejection,
+article response bounds, HTML parser hardening, clean `contentText`, optional
+structured text blocks, and provider-specific article selectors. Discovery
+controls do not authorize article fetching, and no arbitrary-URL extraction
+endpoint may be mounted before those separate controls exist.
