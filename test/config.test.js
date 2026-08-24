@@ -47,7 +47,7 @@ test('production requires an independent secret and explicit sources', () => {
       KIZUNA_NEWS_ARTICLE_REF_SECRET: TEST_ARTICLE_REF_SECRET,
       ENABLED_SOURCES: 'ann',
     }),
-    /PORT is required in production/u,
+    /PORT is required in production process mode/u,
   );
 
   const valid = loadConfig({
@@ -58,6 +58,24 @@ test('production requires an independent secret and explicit sources', () => {
     ENABLED_SOURCES: 'ann,animecorner,animetrending,crunchyroll',
   });
   assert.equal(valid.port, 10000);
+});
+
+test('serverless production does not require PORT but keeps secrets and sources mandatory', () => {
+  const valid = loadConfig({
+    NODE_ENV: 'production',
+    KIZUNA_NEWS_PROVIDER_SECRET: TEST_SECRET,
+    KIZUNA_NEWS_ARTICLE_REF_SECRET: TEST_ARTICLE_REF_SECRET,
+    ENABLED_SOURCES: 'ann',
+  }, { runtime: 'serverless' });
+  assert.equal(valid.port, null);
+
+  assert.throws(
+    () => loadConfig({
+      NODE_ENV: 'production',
+      ENABLED_SOURCES: 'ann',
+    }, { runtime: 'serverless' }),
+    /Invalid secret/u,
+  );
 });
 
 test('configuration rejects short secrets, unknown sources, duplicates, and bad ports', () => {

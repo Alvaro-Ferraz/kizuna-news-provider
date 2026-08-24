@@ -47,11 +47,12 @@ function createV1SourceRegistry() {
   return Object.fromEntries(
     V1_SOURCE_KEYS.map((providerKey) => {
       const metadata = V1_SOURCE_METADATA[providerKey];
+      const provider = V1_FETCHERS[providerKey].createProvider();
 
       return [providerKey, {
         providerKey,
         ...metadata,
-        fetch: V1_FETCHERS[providerKey],
+        fetch: () => provider.fetch(),
         emptyResultAmbiguous: false,
       }];
     }),

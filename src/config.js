@@ -10,7 +10,7 @@ const SECRET_PATTERN = /^[\x21-\x7e]+$/u;
 
 const appConfigSchema = z.object({
   nodeEnv: z.enum(['development', 'test', 'production']),
-  port: z.number().int().min(1).max(65535),
+  port: z.number().int().min(1).max(65535).nullable(),
   secret: z.string().min(32).max(512).regex(SECRET_PATTERN),
   articleRefSecret: z.string().min(32).max(512).regex(SECRET_PATTERN),
   enabledSources: z.array(z.enum(V1_SOURCE_KEYS)).min(1),
@@ -21,9 +21,10 @@ const appConfigSchema = z.object({
   message: 'Article reference secret must differ from machine authentication secret',
 });
 
-function parsePort(value, nodeEnv) {
+function parsePort(value, nodeEnv, { required = true } = {}) {
   if (value === undefined || value === '') {
-    if (nodeEnv === 'production') throw new Error('PORT is required in production');
+    if (!required) return null;
+    if (nodeEnv === 'production') throw new Error('PORT is required in production process mode');
     return 3000;
   }
   if (!/^\d+$/u.test(value)) throw new Error('PORT must be an integer from 1 to 65535');
@@ -73,13 +74,17 @@ function validateConfig(config) {
   }
 }
 
-function loadConfig(env = process.env) {
+function loadConfig(env = process.env, { runtime = 'process' } = {}) {
   const nodeEnv = env.NODE_ENV || 'development';
+
+  if (!['process', 'serverless'].includes(runtime)) {
+    throw new Error('Runtime must be process or serverless');
+  }
 
   try {
     return validateConfig({
       nodeEnv,
-      port: parsePort(env.PORT, nodeEnv),
+      port: parsePort(env.PORT, nodeEnv, { required: runtime === 'process' }),
       secret: env.KIZUNA_NEWS_PROVIDER_SECRET,
       articleRefSecret: env.KIZUNA_NEWS_ARTICLE_REF_SECRET,
       enabledSources: parseEnabledSources(env.ENABLED_SOURCES, nodeEnv),

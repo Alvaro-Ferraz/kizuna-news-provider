@@ -1,5 +1,11 @@
 # NEWS 01B.5 self-host readiness
 
+> Superseded hosting note (2026-08-24): NEWS 01B.5A introduced the approved
+> zero-additional-fixed-cost constraint. Its Render Starter recommendation is
+> superseded by the Vercel Hobby decision recorded in Kizuna ADR-031 and
+> [DEPLOYMENT.md](DEPLOYMENT.md). The measurements and Docker evidence below
+> remain historical evidence; no Render Starter resource was created.
+
 Decision date: 2026-08-24. Evidence base: upstream fork commit `4f6ed12` plus
 the NEWS 01B.5 working tree. Gate: **SELF-HOST READY** for a single, always-on
 Docker process. This gate covers the provider only; NEWS 01C still owns Kizuna

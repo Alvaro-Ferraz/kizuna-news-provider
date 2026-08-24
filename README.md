@@ -4,9 +4,10 @@ Private backend-to-backend news discovery service for Kizuna. This fork is based
 on [AniNewsAPI](https://github.com/Shineii86/AniNewsAPI) by Shinei Nouzen and
 retains its MIT license and attribution in [NOTICE.md](NOTICE.md).
 
-**Status:** NEWS 01B.5 — **SELF-HOST READY** as a single, always-on Docker
-service. It is not yet wired into the Kizuna application; that integration is
-NEWS 01C. No production resource was created during this phase.
+**Status:** NEWS 01B.5A — **ZERO-COST SERVERLESS DEPLOYMENT READY** for Vercel
+Hobby while the project remains eligible for personal/non-commercial use. It is
+not yet deployed or wired into Kizuna; that integration is NEWS 01C. No paid or
+production resource was created during this phase.
 
 The runtime surface is intentionally small:
 
@@ -47,6 +48,11 @@ npm start
 `.env` automatically. Never commit the secret or reuse a Kizuna user/session
 credential.
 
+The same `createApp()` factory powers the local/Docker listener and the lazy
+serverless entry in `app.js`. Serverless production does not require `PORT`;
+both secrets and explicit `ENABLED_SOURCES` remain mandatory. Docker remains a
+supported local and future container-hosting fallback.
+
 ## Checks
 
 ```bash
@@ -72,5 +78,7 @@ known debt, [docs/V1_SOURCES.md](docs/V1_SOURCES.md) for discovery behavior, and
 [docs/FORK_BASELINE.md](docs/FORK_BASELINE.md) for fork history. Hosting choice,
 capacity evidence, environment inventory, deployment procedure, rollback, and
 the live-check limitation are recorded in
-[docs/SELF_HOST_READINESS.md](docs/SELF_HOST_READINESS.md). The operator steps
-are in [docs/DEPLOYMENT_RUNBOOK.md](docs/DEPLOYMENT_RUNBOOK.md).
+[docs/SELF_HOST_READINESS.md](docs/SELF_HOST_READINESS.md). The zero-cost hosting
+decision and current platform limits are in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md),
+the state audit is in [docs/SERVERLESS_STATE_MODEL.md](docs/SERVERLESS_STATE_MODEL.md),
+and operator steps are in [docs/DEPLOYMENT_RUNBOOK.md](docs/DEPLOYMENT_RUNBOOK.md).

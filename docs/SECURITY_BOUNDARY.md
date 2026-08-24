@@ -49,10 +49,17 @@ does not inherit Kizuna identity.
 
 ## Deployment expectations
 
-Terminate TLS at a trusted private ingress, restrict network reachability to the
-Kizuna backend and operators, inject secrets through the deployment platform,
-and rotate the provider secret independently. Do not expose internal routes via
-a public browser origin.
+Terminate TLS at the hosting edge, inject secrets through production-scoped
+deployment environment variables, and rotate the provider secret independently.
+The Vercel-generated hostname is public network ingress, not authorization;
+Bearer authentication remains mandatory. Do not add CORS or expose internal
+routes through a browser origin. Authenticated and health responses remain
+`Cache-Control: no-store`, so the platform CDN must not cache them.
+
+The selected Vercel Node.js runtime supports the full Node API used by the
+provider. Do not change to Edge runtime or weaken DNS/public-address validation,
+the pinned `https.Agent`, redirect checks, HMAC, byte ceilings, or timeouts to
+fit a hosting target.
 
 ## Remaining debt
 

@@ -19,7 +19,9 @@ sessions, and human API keys. Missing, malformed, or wrong credentials receive
 
 ## `GET /health`
 
-Public process-liveness probe. It performs no provider request, cache access, or
+Public function/application-liveness probe. It proves that the deployed app can
+execute; it does not prove that one permanent instance exists or that upstream
+providers are healthy. It performs no provider request, cache access, or
 dependency check.
 
 ```json
@@ -106,8 +108,11 @@ bounded and never contains an upstream message or payload.
 
 ## `GET /internal/v1/sources/health`
 
-Reads the process-local snapshot written by discovery runs. It never contacts a
-provider.
+Reads the current process/instance-local, best-effort operational snapshot
+written by discovery runs. It never contacts a provider. On serverless, the
+snapshot can reset or differ between consecutive calls and must never be used as
+global health or application truth. `DiscoveryRunResponse.sources` is the
+authoritative outcome for that discovery command.
 
 ```text
 {

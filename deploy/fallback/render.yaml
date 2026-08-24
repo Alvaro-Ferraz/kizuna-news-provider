@@ -1,3 +1,5 @@
+# Non-current fallback only. Production hosting is Vercel Hobby under ADR-031.
+# Do not sync this paid Blueprint while the zero-cost constraint is active.
 services:
   - type: web
     name: kizuna-news-provider
