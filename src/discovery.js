@@ -1,7 +1,5 @@
 'use strict';
 
-const he = require('he');
-
 const {
   CONTRACT_LIMITS,
   DISCOVERY_METHODS,
@@ -9,23 +7,12 @@ const {
   sourceArticleSchema,
   sourceOutcomeSchema,
 } = require('./contracts');
+const { toPlainText } = require('./text-normalization');
 
 const INVALID_LANGUAGE_TAG = Symbol('invalid-language-tag');
 
 function addWarning(warnings, warning) {
   if (!warnings.includes(warning) && warnings.length < 10) warnings.push(warning);
-}
-
-function toPlainText(value) {
-  if (typeof value !== 'string') return null;
-  const decodedValue = he.decode(he.decode(value));
-  const withoutActiveContent = decodedValue
-    .replace(/<(script|style)[^>]*>[\s\S]*?<\/\1>/giu, ' ')
-    .replace(/<[^>]+>/gu, ' ');
-  return he.decode(withoutActiveContent)
-    .replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/gu, '')
-    .replace(/\s+/gu, ' ')
-    .trim();
 }
 
 function normalizeOptionalText(value, maximumLength) {
@@ -58,6 +45,7 @@ function normalizeUrl(value, { allowedHosts } = {}) {
     const url = new URL(value);
     if (url.protocol !== 'https:' || !url.hostname) return null;
     if (allowedHosts && !allowedHosts.includes(url.hostname.toLowerCase())) return null;
+    url.hash = '';
     return url.href;
   } catch {
     return null;
@@ -66,15 +54,18 @@ function normalizeUrl(value, { allowedHosts } = {}) {
 
 function normalizeTags(value) {
   if (value === undefined || value === null) return [];
-  if (!Array.isArray(value) || value.length > CONTRACT_LIMITS.tags) {
-    throw new Error('INVALID_TAGS');
-  }
+  if (!Array.isArray(value)) throw new Error('INVALID_TAGS');
 
   const tags = [];
-  for (const rawTag of value) {
+  const identities = new Set();
+  for (const rawTag of value.slice(0, CONTRACT_LIMITS.tags)) {
     const tag = toPlainText(rawTag);
     if (!tag || tag.length > CONTRACT_LIMITS.tag) throw new Error('INVALID_TAGS');
-    if (!tags.includes(tag)) tags.push(tag);
+    const identity = tag.toLocaleLowerCase('en-US');
+    if (!identities.has(identity)) {
+      identities.add(identity);
+      tags.push(tag);
+    }
   }
   return tags;
 }
@@ -93,7 +84,6 @@ function normalizeArticle(rawArticle, source, discoveredAt) {
 
     const imageValue = rawArticle.imageUrl || rawArticle.image;
     const imageUrl = imageValue ? normalizeUrl(imageValue) : null;
-    if (imageValue && !imageUrl) return null;
 
     const language = normalizeLanguageTag(rawArticle.language);
     const locale = normalizeLanguageTag(rawArticle.locale);
@@ -149,21 +139,29 @@ function normalizeSourceArticles(rawArticles, source, discoveredAt) {
   if (rawArticles.length > cappedArticles.length) addWarning(warnings, 'ARTICLE_LIMIT_EXCEEDED');
 
   const articles = [];
-  const identities = new Set();
+  const identities = new Map();
   for (const rawArticle of cappedArticles) {
     const article = normalizeArticle(rawArticle, source, discoveredAt);
     if (!article) {
-      addWarning(warnings, 'INVALID_ARTICLE_FILTERED');
+      addWarning(warnings, 'INVALID_ITEM_DROPPED');
       continue;
     }
+
+    const rawDate = rawArticle.publishedAt || rawArticle.date;
+    if (rawDate && article.publishedAt === null) addWarning(warnings, 'INVALID_DATE_DROPPED');
 
     const identity = articleIdentity(article);
     if (identities.has(identity)) {
-      addWarning(warnings, 'DUPLICATE_ARTICLE_FILTERED');
+      addWarning(warnings, 'DUPLICATE_ITEM_DROPPED');
+      const existingIndex = identities.get(identity);
+      const existing = articles[existingIndex];
+      const completeness = (value) => [value.excerpt, value.publishedAt, value.imageUrl]
+        .filter(Boolean).length + value.tags.length;
+      if (completeness(article) > completeness(existing)) articles[existingIndex] = article;
       continue;
     }
 
-    identities.add(identity);
+    identities.set(identity, articles.length);
     articles.push(article);
   }
 
@@ -217,8 +215,10 @@ function createDiscoveryService({
   async function runSource(source, discoveredAt) {
     const startedAt = monotonicNow();
     try {
-      const rawArticles = await source.fetch();
+      const fetched = await source.fetch();
       const durationMs = Math.max(0, Math.round(monotonicNow() - startedAt));
+      const structured = Array.isArray(fetched) ? null : fetched;
+      const rawArticles = structured?.articles ?? fetched;
       if (!Array.isArray(rawArticles)) {
         return {
           articles: [],
@@ -231,23 +231,55 @@ function createDiscoveryService({
             warnings: [],
             errorCode: 'INVALID_SOURCE_RESULT',
           }),
+          metadata: {},
+        };
+      }
+
+      const metadata = {
+        attemptCount: structured?.attemptCount || 0,
+        cacheStatus: structured?.cacheStatus || 'none',
+        freshUntil: structured?.freshUntil || null,
+      };
+      if (structured?.outcome === 'failed') {
+        return {
+          articles: [],
+          outcome: sourceOutcomeSchema.parse({
+            providerKey: source.providerKey,
+            sourceDisplayName: source.sourceDisplayName,
+            outcome: 'failed',
+            articleCount: 0,
+            durationMs,
+            warnings: structured.warnings || [],
+            errorCode: structured.errorCode || 'SOURCE_FETCH_FAILED',
+          }),
+          metadata,
         };
       }
 
       const normalized = normalizeSourceArticles(rawArticles, source, discoveredAt);
+      const warnings = [];
+      for (const warning of [...(structured?.warnings || []), ...normalized.warnings]) {
+        addWarning(warnings, warning);
+      }
       return {
         articles: normalized.articles,
         outcome: sourceOutcomeSchema.parse({
           providerKey: source.providerKey,
           sourceDisplayName: source.sourceDisplayName,
-          outcome: normalized.warnings.length > 0 ? 'degraded' : 'healthy',
+          outcome: structured?.outcome === 'degraded' || warnings.length > 0
+            ? 'degraded'
+            : 'healthy',
           articleCount: normalized.articles.length,
           durationMs,
-          warnings: normalized.warnings,
+          warnings,
           errorCode: null,
         }),
+        metadata,
       };
-    } catch {
+    } catch (error) {
+      const errorCode = typeof error?.code === 'string' && /^PROVIDER_[A-Z0-9_]+$/u.test(error.code)
+        ? error.code
+        : 'SOURCE_FETCH_FAILED';
       return {
         articles: [],
         outcome: sourceOutcomeSchema.parse({
@@ -257,8 +289,9 @@ function createDiscoveryService({
           articleCount: 0,
           durationMs: Math.max(0, Math.round(monotonicNow() - startedAt)),
           warnings: [],
-          errorCode: 'SOURCE_FETCH_FAILED',
+          errorCode,
         }),
+        metadata: { attemptCount: error?.attemptCount || 0, cacheStatus: 'none', freshUntil: null },
       };
     }
   }
@@ -278,15 +311,27 @@ function createDiscoveryService({
         sources: results.map((result) => result.outcome),
       };
 
+      response.articles.sort((left, right) => {
+        if (left.publishedAt && right.publishedAt) {
+          const byDate = right.publishedAt.localeCompare(left.publishedAt);
+          if (byDate !== 0) return byDate;
+        } else if (left.publishedAt) return -1;
+        else if (right.publishedAt) return 1;
+        return 0;
+      });
+
       applyResponseSizeLimit(response);
 
-      for (const outcome of response.sources) {
-        healthStore.record(outcome, fetchedAt);
+      for (const [index, outcome] of response.sources.entries()) {
+        const metadata = results[index].metadata;
+        healthStore.record(outcome, fetchedAt, metadata);
         logger.info('provider_discovery_completed', {
           providerKey: outcome.providerKey,
           outcome: outcome.outcome,
           articleCount: outcome.articleCount,
           durationMs: outcome.durationMs,
+          attemptCount: metadata.attemptCount,
+          cacheStatus: metadata.cacheStatus,
           errorCode: outcome.errorCode,
         });
       }

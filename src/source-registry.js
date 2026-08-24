@@ -1,6 +1,7 @@
 'use strict';
 
 const { SOURCES } = require('../utils/sources');
+const { V1_PROVIDER_DEFINITIONS } = require('./v1-provider-definitions');
 
 const V1_SOURCE_KEYS = Object.freeze([
   'ann',
@@ -12,31 +13,23 @@ const V1_SOURCE_KEYS = Object.freeze([
 const V1_SOURCE_METADATA = Object.freeze({
   ann: Object.freeze({
     sourceDisplayName: 'Anime News Network',
-    discoveryMethod: 'GOOGLE_NEWS_RSS',
-    allowedSourceHosts: Object.freeze([
-      'news.google.com',
-      'animenewsnetwork.com',
-      'www.animenewsnetwork.com',
-    ]),
+    discoveryMethod: 'DIRECT_RSS',
+    allowedSourceHosts: V1_PROVIDER_DEFINITIONS.ann.articleHosts,
   }),
   animecorner: Object.freeze({
     sourceDisplayName: 'Anime Corner',
     discoveryMethod: 'DIRECT_RSS',
-    allowedSourceHosts: Object.freeze(['animecorner.me', 'www.animecorner.me']),
+    allowedSourceHosts: V1_PROVIDER_DEFINITIONS.animecorner.articleHosts,
   }),
   animetrending: Object.freeze({
     sourceDisplayName: 'Anime Trending',
     discoveryMethod: 'DIRECT_RSS',
-    allowedSourceHosts: Object.freeze(['anitrendz.net', 'www.anitrendz.net']),
+    allowedSourceHosts: V1_PROVIDER_DEFINITIONS.animetrending.articleHosts,
   }),
   crunchyroll: Object.freeze({
     sourceDisplayName: 'Crunchyroll',
-    discoveryMethod: 'GOOGLE_NEWS_RSS',
-    allowedSourceHosts: Object.freeze([
-      'news.google.com',
-      'crunchyroll.com',
-      'www.crunchyroll.com',
-    ]),
+    discoveryMethod: 'DIRECT_RSS',
+    allowedSourceHosts: V1_PROVIDER_DEFINITIONS.crunchyroll.articleHosts,
   }),
 });
 
@@ -54,7 +47,7 @@ function createV1SourceRegistry() {
         providerKey,
         ...metadata,
         fetch: upstreamSource.fetch,
-        emptyResultAmbiguous: true,
+        emptyResultAmbiguous: false,
       }];
     }),
   );
