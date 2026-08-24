@@ -39,8 +39,9 @@ test('package metadata records the audited runtime baseline', () => {
     readFileSync(path.join(repositoryRoot, 'package.json'), 'utf8'),
   );
 
-  assert.equal(packageMetadata.version, '5.1.0');
-  assert.equal(packageMetadata.engines.node, '>=20.x');
+  assert.equal(packageMetadata.version, '0.1.0');
+  assert.equal(packageMetadata.engines.node, '22.x');
+  assert.equal(packageMetadata.kizunaNewsProvider.upstreamVersion, '5.1.0');
   assert.match(packageMetadata.scripts.test, /node --require .* --test/u);
   assert.equal(packageMetadata.scripts['test:live'], 'node scripts/live-smoke.js');
 });

@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: kizuna-news-provider
+    runtime: docker
+    plan: starter
+    region: oregon
+    numInstances: 1
+    healthCheckPath: /health
+    maxShutdownDelaySeconds: 30
+    autoDeployTrigger: checksPass
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: ENABLED_SOURCES
+        value: ann,animecorner,animetrending,crunchyroll
+      - key: KIZUNA_NEWS_PROVIDER_SECRET
+        sync: false
+      - key: KIZUNA_NEWS_ARTICLE_REF_SECRET
+        sync: false

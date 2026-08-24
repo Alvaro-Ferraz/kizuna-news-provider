@@ -204,3 +204,27 @@ test('discovery response is reduced below the two MiB wire limit', async () => {
     (source) => source.warnings.includes('RESPONSE_SIZE_LIMIT'),
   ));
 });
+
+test('concurrent discovery runs coalesce the complete run and release state afterward', async () => {
+  let releaseFetch;
+  let calls = 0;
+  const pending = new Promise((resolve) => { releaseFetch = resolve; });
+  const { service } = createService({
+    ann: async () => {
+      calls += 1;
+      await pending;
+      return [createRawArticle('ann')];
+    },
+  }, ['ann']);
+
+  const first = service.run();
+  const second = service.run();
+  assert.equal(first, second);
+  assert.deepEqual(service.inspect(), { inflight: 1 });
+  assert.equal(calls, 1);
+
+  releaseFetch();
+  const [one, two] = await Promise.all([first, second]);
+  assert.deepEqual(one, two);
+  assert.deepEqual(service.inspect(), { inflight: 0 });
+});

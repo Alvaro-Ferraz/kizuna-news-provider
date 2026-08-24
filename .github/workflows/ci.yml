@@ -21,7 +21,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           cache: npm
-          node-version: 20
+          node-version: 22
 
       - name: Install locked dependencies
         run: npm ci
@@ -34,3 +34,6 @@ jobs:
 
       - name: Verify build baseline
         run: npm run build
+
+      - name: Build production container
+        run: docker build --tag kizuna-news-provider:ci .

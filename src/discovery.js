@@ -214,6 +214,7 @@ function createDiscoveryService({
   now = () => new Date(),
   monotonicNow = () => Date.now(),
 }) {
+  let inflightRun = null;
   const articleRefSigner = createArticleRefSigner({
     secret: config.articleRefSecret,
     now: () => now().getTime(),
@@ -315,8 +316,7 @@ function createDiscoveryService({
     }
   }
 
-  return {
-    async run() {
+  async function executeRun() {
       const fetchedAt = now().toISOString();
       const results = await Promise.all(
         enabledSources.map((source) => runSource(source, fetchedAt)),
@@ -345,6 +345,7 @@ function createDiscoveryService({
         const metadata = results[index].metadata;
         healthStore.record(outcome, fetchedAt, metadata);
         logger.info('provider_discovery_completed', {
+          operation: 'discovery',
           providerKey: outcome.providerKey,
           outcome: outcome.outcome,
           articleCount: outcome.articleCount,
@@ -359,6 +360,16 @@ function createDiscoveryService({
         allSourcesFailed: response.sources.every((source) => source.outcome === 'failed'),
         response: discoveryRunResponseSchema.parse(response),
       };
+  }
+
+  return {
+    run() {
+      if (inflightRun) return inflightRun;
+      inflightRun = executeRun().finally(() => { inflightRun = null; });
+      return inflightRun;
+    },
+    inspect() {
+      return { inflight: inflightRun === null ? 0 : 1 };
     },
   };
 }

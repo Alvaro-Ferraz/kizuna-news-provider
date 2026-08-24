@@ -21,8 +21,11 @@ const appConfigSchema = z.object({
   message: 'Article reference secret must differ from machine authentication secret',
 });
 
-function parsePort(value) {
-  if (value === undefined || value === '') return 3000;
+function parsePort(value, nodeEnv) {
+  if (value === undefined || value === '') {
+    if (nodeEnv === 'production') throw new Error('PORT is required in production');
+    return 3000;
+  }
   if (!/^\d+$/u.test(value)) throw new Error('PORT must be an integer from 1 to 65535');
   return Number(value);
 }
@@ -76,7 +79,7 @@ function loadConfig(env = process.env) {
   try {
     return validateConfig({
       nodeEnv,
-      port: parsePort(env.PORT),
+      port: parsePort(env.PORT, nodeEnv),
       secret: env.KIZUNA_NEWS_PROVIDER_SECRET,
       articleRefSecret: env.KIZUNA_NEWS_ARTICLE_REF_SECRET,
       enabledSources: parseEnabledSources(env.ENABLED_SOURCES, nodeEnv),
@@ -92,6 +95,7 @@ module.exports = {
   DEFAULT_ENABLED_SOURCES,
   appConfigSchema,
   loadConfig,
+  parsePort,
   parseEnabledSources,
   validateConfig,
 };

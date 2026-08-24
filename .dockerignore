@@ -6,3 +6,11 @@ node_modules
 data
 coverage
 *.log
+docs
+test
+.github
+scripts
+CHANGELOG.md
+CONTRIBUTING.md
+.eslintrc.json
+.nvmrc

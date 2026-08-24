@@ -65,7 +65,7 @@ test('SourceArticle rejects excessive tags and unknown payload fields', () => {
 function validExtraction(overrides = {}) {
   return {
     schemaVersion: 1,
-    serviceVersion: '5.1.0-test',
+    serviceVersion: '0.1.0-test',
     extractedAt: '2026-08-24T12:00:00.000Z',
     article: {
       providerKey: 'ann',

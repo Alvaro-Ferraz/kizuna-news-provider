@@ -33,7 +33,7 @@ async function run() {
     timeout: 120_000,
     validateStatus: () => true,
   });
-  if (discovery.status !== 200 || discovery.data?.schemaVersion !== 1) {
+  if (discovery.status !== 200 || discovery.data?.schemaVersion !== 2) {
     throw new Error(`Discovery smoke failed with status ${discovery.status}`);
   }
 

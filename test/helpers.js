@@ -16,7 +16,7 @@ function createTestConfig(overrides = {}) {
     secret: TEST_SECRET,
     articleRefSecret: TEST_ARTICLE_REF_SECRET,
     enabledSources: [...V1_SOURCE_KEYS],
-    serviceVersion: '5.1.0-test',
+    serviceVersion: '0.1.0-test',
     jsonBodyLimit: '16kb',
     ...overrides,
   };

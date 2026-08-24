@@ -1,7 +1,17 @@
 'use strict';
 
-const { SOURCES } = require('../utils/sources');
+const fetchANN = require('../utils/fetchANN');
+const fetchAnimeCorner = require('../utils/fetchAnimeCorner');
+const fetchAnimeTrending = require('../utils/fetchAnimeTrending');
+const fetchCrunchyroll = require('../utils/fetchCrunchyroll');
 const { V1_PROVIDER_DEFINITIONS } = require('./v1-provider-definitions');
+
+const V1_FETCHERS = Object.freeze({
+  ann: fetchANN,
+  animecorner: fetchAnimeCorner,
+  animetrending: fetchAnimeTrending,
+  crunchyroll: fetchCrunchyroll,
+});
 
 const V1_SOURCE_KEYS = Object.freeze([
   'ann',
@@ -36,17 +46,12 @@ const V1_SOURCE_METADATA = Object.freeze({
 function createV1SourceRegistry() {
   return Object.fromEntries(
     V1_SOURCE_KEYS.map((providerKey) => {
-      const upstreamSource = SOURCES[providerKey];
       const metadata = V1_SOURCE_METADATA[providerKey];
-
-      if (!upstreamSource || upstreamSource.name !== metadata.sourceDisplayName) {
-        throw new Error(`V1 source registry mismatch for ${providerKey}`);
-      }
 
       return [providerKey, {
         providerKey,
         ...metadata,
-        fetch: upstreamSource.fetch,
+        fetch: V1_FETCHERS[providerKey],
         emptyResultAmbiguous: false,
       }];
     }),

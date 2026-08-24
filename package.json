@@ -1,12 +1,15 @@
 {
   "name": "kizuna-news-provider",
-  "version": "5.1.0",
+  "version": "0.1.0",
   "description": "Private, server-to-server news discovery and extraction provider for Kizuna",
   "main": "server.js",
   "scripts": {
     "dev": "node server.js",
     "build": "node --check server.js && node --check src/app.js",
     "start": "node server.js",
+    "benchmark:local": "node scripts/benchmark-local.js",
+    "validate:live": "node scripts/live-readiness.js",
+    "smoke:deployment": "node scripts/smoke-deployment.js",
     "test": "node --require ./test/network-guard.js --test test/*.test.js",
     "test:live": "node scripts/live-smoke.js",
     "lint": "eslint . --ignore-pattern 'node_modules/' --ignore-pattern 'data/'",
@@ -24,7 +27,11 @@
     "eslint": "^8.56.0"
   },
   "engines": {
-    "node": ">=20.x"
+    "node": "22.x"
+  },
+  "kizunaNewsProvider": {
+    "upstreamVersion": "5.1.0",
+    "upstreamBaseCommit": "22cee66e01cc5158cb96b69794f2351487fba7e4"
   },
   "keywords": [
     "anime",

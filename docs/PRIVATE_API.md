@@ -178,7 +178,7 @@ Synthetic response shape:
 ```json
 {
   "schemaVersion": 1,
-  "serviceVersion": "5.1.0",
+  "serviceVersion": "0.1.0",
   "extractedAt": "2026-08-24T12:00:00.000Z",
   "article": {
     "providerKey": "ann",
