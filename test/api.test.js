@@ -4,7 +4,11 @@ const assert = require('node:assert/strict');
 const test = require('node:test');
 
 const { SourceHealthStore } = require('../src/source-health-store');
+const { createArticleRefSigner } = require('../src/article-ref');
+const { readFileSync } = require('node:fs');
+const path = require('node:path');
 const {
+  TEST_ARTICLE_REF_SECRET,
   TEST_SECRET,
   createTestConfig,
   createTestRegistry,
@@ -148,7 +152,7 @@ test('JSON boundary rejects wrong types, unknown fields, malformed JSON, and lar
   }
 });
 
-test('legacy product routes, landing page, extraction, and browser preflight do not exist', async (t) => {
+test('legacy product routes and landing page do not exist while browser preflight stays unauthorized', async (t) => {
   const service = await startTestApp();
   t.after(() => service.close());
 
@@ -161,12 +165,6 @@ test('legacy product routes, landing page, extraction, and browser preflight do 
     assert.equal(response.status, 404);
     assert.equal((await readJson(response)).error.code, 'NOT_FOUND');
   }
-
-  const extraction = await service.request('/internal/v1/article-extractions', {
-    method: 'POST', headers: authorization,
-  });
-  assert.equal(extraction.status, 404);
-  assert.equal((await readJson(extraction)).error.code, 'NOT_FOUND');
 
   const preflight = await service.request('/internal/v1/discovery-runs', { method: 'OPTIONS' });
   assert.equal(preflight.status, 401);
@@ -190,4 +188,81 @@ test('request IDs are constrained and unexpected errors use a safe envelope', as
   assert.equal(body.error.requestId, response.headers.get('x-request-id'));
   assert.notEqual(body.error.requestId, 'invalid request id with spaces');
   assert.equal(JSON.stringify(body).includes('sensitive'), false);
+});
+
+test('article extraction requires bearer plus strict JSON articleRef and never accepts a caller URL', async (t) => {
+  const now = new Date('2026-08-24T12:00:00.000Z');
+  const signer = createArticleRefSigner({
+    secret: TEST_ARTICLE_REF_SECRET,
+    now: () => now.getTime(),
+  });
+  const articleRef = signer.sign({
+    providerKey: 'ann',
+    providerArticleId: 'ann-guid-api',
+    canonicalSourceUrl: 'https://www.animenewsnetwork.com/news/example/.1',
+    locale: 'en-US',
+  });
+  let fetchCount = 0;
+  const service = await startTestApp({
+    config: createTestConfig({ enabledSources: ['ann'] }),
+    dependencies: {
+      now: () => now,
+      articleHttpClient: {
+        getArticle: () => {
+          fetchCount += 1;
+          return {
+            body: readFileSync(path.join(__dirname, 'fixtures', 'ann-article.html'), 'utf8'),
+            finalUrl: 'https://www.animenewsnetwork.com/news/example/.1',
+            attemptCount: 1,
+          };
+        },
+      },
+    },
+  });
+  t.after(() => service.close());
+
+  for (const request of [
+    { headers: { 'content-type': 'application/json' }, body: JSON.stringify({ articleRef }) },
+    {
+      headers: { cookie: `session=${TEST_SECRET}`, 'content-type': 'application/json' },
+      body: JSON.stringify({ articleRef }),
+    },
+    { headers: authorization, body: JSON.stringify({ articleRef }) },
+    {
+      headers: { ...authorization, 'content-type': 'application/json' },
+      body: JSON.stringify({ url: 'https://www.animenewsnetwork.com/news/example/.1' }),
+    },
+    {
+      headers: { ...authorization, 'content-type': 'application/json' },
+      body: JSON.stringify({ articleRef, url: 'https://evil.example/' }),
+    },
+  ]) {
+    const response = await service.request('/internal/v1/article-extractions', {
+      method: 'POST', ...request,
+    });
+    assert.equal([400, 401, 415].includes(response.status), true);
+  }
+  assert.equal(fetchCount, 0);
+
+  const invalid = await service.request('/internal/v1/article-extractions', {
+    method: 'POST',
+    headers: { ...authorization, 'content-type': 'application/json' },
+    body: JSON.stringify({ articleRef: 'tampered.value' }),
+  });
+  assert.equal(invalid.status, 422);
+  assert.equal((await readJson(invalid)).error.code, 'INVALID_ARTICLE_REF');
+  assert.equal(fetchCount, 0);
+
+  const valid = await service.request('/internal/v1/article-extractions', {
+    method: 'POST',
+    headers: { ...authorization, 'content-type': 'application/json' },
+    body: JSON.stringify({ articleRef }),
+  });
+  assert.equal(valid.status, 200);
+  const body = await readJson(valid);
+  assert.equal(body.article.selectorVersion, 'ann-v1');
+  assert.equal(body.article.contentText.includes('<'), false);
+  assert.equal(Object.hasOwn(body, 'articleRef'), false);
+  assert.equal(Object.hasOwn(body.article, 'html'), false);
+  assert.equal(fetchCount, 1);
 });

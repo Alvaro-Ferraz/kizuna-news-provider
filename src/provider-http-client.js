@@ -18,6 +18,16 @@ const DEFAULTS = Object.freeze({
   perHostConcurrency: 1,
 });
 
+const ARTICLE_DEFAULTS = Object.freeze({
+  maximumBytes: 2 * 1024 * 1024,
+  maximumRedirects: 3,
+  maximumAttempts: 2,
+  requestTimeoutMs: 15_000,
+  operationDeadlineMs: 20_000,
+  globalConcurrency: 2,
+  perHostConcurrency: 1,
+});
+
 const USER_AGENT = `Kizuna-News-Provider/${packageMetadata.version} (+https://animekizuna.com)`;
 const RSS_CONTENT_TYPES = Object.freeze([
   'application/rss+xml',
@@ -25,6 +35,7 @@ const RSS_CONTENT_TYPES = Object.freeze([
   'text/xml',
   'application/atom+xml',
 ]);
+const ARTICLE_CONTENT_TYPES = Object.freeze(['text/html', 'application/xhtml+xml']);
 const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
 const RETRYABLE_STATUSES = new Set([429, 500, 502, 503, 504]);
 
@@ -167,9 +178,7 @@ function createProviderHttpClient(options = {}) {
     try {
       validated = validateOutboundUrl(url, requestOptions.allowedHosts);
     } catch (error) {
-      const code = error.message === 'PROVIDER_HOST_REJECTED' && isRedirect
-        ? 'PROVIDER_REDIRECT_REJECTED'
-        : error.message;
+      const code = isRedirect ? 'PROVIDER_REDIRECT_REJECTED' : error.message;
       throw new ProviderError(code);
     }
 
@@ -239,7 +248,7 @@ function createProviderHttpClient(options = {}) {
           continue;
         }
 
-        if (response.status === 304) {
+        if (response.status === 304 && requestOptions.allowNotModified) {
           disposeBody(response.data);
           return { status: 304, headers, body: null, finalUrl: currentUrl.href };
         }
@@ -249,7 +258,7 @@ function createProviderHttpClient(options = {}) {
         }
 
         const contentType = (headers['content-type'] || '').split(';', 1)[0].trim().toLowerCase();
-        if (!RSS_CONTENT_TYPES.includes(contentType)) {
+        if (!requestOptions.acceptedContentTypes.includes(contentType)) {
           disposeBody(response.data);
           throw new ProviderError('PROVIDER_INVALID_CONTENT_TYPE');
         }
@@ -283,7 +292,50 @@ function createProviderHttpClient(options = {}) {
       let lastError;
       for (let attempt = 1; attempt <= settings.maximumAttempts; attempt += 1) {
         try {
-          const response = await oneAttempt(url, { allowedHosts, headers }, operationDeadline);
+          const response = await oneAttempt(url, {
+            allowedHosts,
+            headers,
+            acceptedContentTypes: RSS_CONTENT_TYPES,
+            allowNotModified: true,
+          }, operationDeadline);
+          return { ...response, attemptCount: attempt };
+        } catch (error) {
+          lastError = asProviderError(error);
+          lastError.attemptCount = attempt;
+          if (!lastError.retryable || attempt === settings.maximumAttempts) throw lastError;
+
+          const backoff = Math.round(200 * (2 ** (attempt - 1)) * (0.5 + random()));
+          const delay = lastError.retryAfterMs === null ? backoff : lastError.retryAfterMs;
+          if (delay >= operationDeadline - now()) {
+            const deadlineError = new ProviderError('PROVIDER_DEADLINE_EXCEEDED', {
+              retryable: true,
+              cause: lastError,
+            });
+            deadlineError.attemptCount = attempt;
+            throw deadlineError;
+          }
+          await sleep(delay);
+        }
+      }
+      throw lastError;
+    },
+    async getArticle({ url, allowedHosts, deadlineAt }) {
+      const operationDeadline = deadlineAt || now() + settings.operationDeadlineMs;
+      const headers = {
+        Accept: 'text/html, application/xhtml+xml;q=0.9',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'User-Agent': USER_AGENT,
+      };
+
+      let lastError;
+      for (let attempt = 1; attempt <= settings.maximumAttempts; attempt += 1) {
+        try {
+          const response = await oneAttempt(url, {
+            allowedHosts,
+            headers,
+            acceptedContentTypes: ARTICLE_CONTENT_TYPES,
+            allowNotModified: false,
+          }, operationDeadline);
           return { ...response, attemptCount: attempt };
         } catch (error) {
           lastError = asProviderError(error);
@@ -315,11 +367,20 @@ function getDefaultProviderHttpClient() {
   return defaultClient;
 }
 
+let defaultArticleClient;
+function getDefaultArticleHttpClient() {
+  if (!defaultArticleClient) defaultArticleClient = createProviderHttpClient(ARTICLE_DEFAULTS);
+  return defaultArticleClient;
+}
+
 module.exports = {
+  ARTICLE_CONTENT_TYPES,
+  ARTICLE_DEFAULTS,
   DEFAULTS,
   RSS_CONTENT_TYPES,
   USER_AGENT,
   createProviderHttpClient,
+  getDefaultArticleHttpClient,
   getDefaultProviderHttpClient,
   parseRetryAfter,
   readBoundedBody,

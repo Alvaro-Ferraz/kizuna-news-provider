@@ -5,6 +5,7 @@ const { readFileSync } = require('node:fs');
 const path = require('node:path');
 const test = require('node:test');
 
+const { createArticleRefSigner } = require('../src/article-ref');
 const { normalizeSourceArticles } = require('../src/discovery');
 const { EXCERPT_LIMIT, ITEM_LIMIT, parseRss } = require('../src/rss-provider');
 const { V1_PROVIDER_DEFINITIONS } = require('../src/v1-provider-definitions');
@@ -12,6 +13,10 @@ const { V1_SOURCE_METADATA } = require('../src/source-registry');
 
 const fixtureDirectory = path.join(__dirname, 'fixtures');
 const discoveredAt = '2026-08-24T12:00:00.000Z';
+const articleRefSigner = createArticleRefSigner({
+  secret: 'parser-test-article-ref-secret-at-least-32-characters',
+  now: () => new Date(discoveredAt).getTime(),
+});
 
 function fixture(name) {
   return readFileSync(path.join(fixtureDirectory, name), 'utf8');
@@ -74,6 +79,7 @@ test('Crunchyroll localized fixtures preserve one GUID and correct language/loca
       emptyResultAmbiguous: false,
     },
     discoveredAt,
+    articleRefSigner,
   );
   assert.equal(normalized.articles.length, 1);
   assert.equal(normalized.articles[0].locale, 'pt-BR');

@@ -3,7 +3,11 @@
 const assert = require('node:assert/strict');
 const test = require('node:test');
 
-const { createProviderHttpClient, readBoundedBody } = require('../src/provider-http-client');
+const {
+  ARTICLE_DEFAULTS,
+  createProviderHttpClient,
+  readBoundedBody,
+} = require('../src/provider-http-client');
 
 const feedUrl = 'https://feeds.example.test/news.xml';
 const allowedHosts = ['feeds.example.test'];
@@ -178,4 +182,116 @@ test('HTTP client enforces two global requests and one request per host', async 
   })));
   assert.equal(maximumActive, 2);
   assert.equal(maximumByHost.get('one.example.test'), 1);
+});
+
+test('article HTTP mode accepts only bounded HTML and uses article-specific limits', async () => {
+  const { calls, client } = createMockClient([
+    response(200, { 'Content-Type': 'text/html; charset=utf-8' }, '<article>safe</article>'),
+  ], ARTICLE_DEFAULTS);
+  const result = await client.getArticle({ url: feedUrl, allowedHosts });
+  assert.equal(result.body, '<article>safe</article>');
+  assert.equal(result.attemptCount, 1);
+  assert.equal(calls[0].maximumBytes, 2 * 1024 * 1024);
+  assert.equal(calls[0].timeoutMs, 15_000);
+  assert.match(calls[0].headers.Accept, /text\/html/u);
+});
+
+test('article HTTP mode rejects non-HTML and oversize decompressed bodies without retry', async () => {
+  for (const [mockResponse, code] of [
+    [response(200, { 'Content-Type': 'application/pdf' }, 'pdf'), 'PROVIDER_INVALID_CONTENT_TYPE'],
+    [response(200, { 'Content-Type': 'text/html' }, 'x'.repeat(1025)), 'PROVIDER_RESPONSE_TOO_LARGE'],
+  ]) {
+    const { calls, client } = createMockClient([mockResponse], {
+      ...ARTICLE_DEFAULTS,
+      maximumBytes: 1024,
+    });
+    await assert.rejects(
+      () => client.getArticle({ url: feedUrl, allowedHosts }),
+      (error) => error.code === code,
+    );
+    assert.equal(calls.length, 1);
+  }
+});
+
+test('article HTTP mode retries only transient responses within its two-attempt deadline', async () => {
+  const transient = createMockClient([
+    response(429, { 'Retry-After': '1' }),
+    response(200, { 'Content-Type': 'text/html' }, '<article>safe</article>'),
+  ], ARTICLE_DEFAULTS);
+  const result = await transient.client.getArticle({ url: feedUrl, allowedHosts });
+  assert.equal(result.attemptCount, 2);
+  assert.deepEqual(transient.sleeps, [1000]);
+
+  for (const status of [403, 404]) {
+    const rejected = createMockClient([response(status)], ARTICLE_DEFAULTS);
+    await assert.rejects(
+      () => rejected.client.getArticle({ url: feedUrl, allowedHosts }),
+      (error) => error.code === (status === 403 ? 'PROVIDER_HTTP_403' : 'PROVIDER_HTTP_ERROR'),
+    );
+    assert.equal(rejected.calls.length, 1);
+  }
+});
+
+test('article redirects repeat allowlist validation and retain the newly pinned DNS result', async () => {
+  const resolutions = [];
+  const calls = [];
+  const client = createProviderHttpClient({
+    ...ARTICLE_DEFAULTS,
+    resolveHost: (hostname) => {
+      resolutions.push(hostname);
+      return hostname === 'feeds.example.test'
+        ? { address: '93.184.216.34', family: 4 }
+        : { address: '93.184.216.35', family: 4 };
+    },
+    transport: (options) => {
+      calls.push(options);
+      if (calls.length === 1) {
+        return response(302, { Location: 'https://www.example.test/article' });
+      }
+      return response(200, { 'Content-Type': 'application/xhtml+xml' }, '<article>safe</article>');
+    },
+  });
+  const result = await client.getArticle({
+    url: feedUrl,
+    allowedHosts: ['feeds.example.test', 'www.example.test'],
+  });
+  assert.deepEqual(resolutions, ['feeds.example.test', 'www.example.test']);
+  assert.deepEqual(calls.map((call) => call.pinnedAddress.address), [
+    '93.184.216.34', '93.184.216.35',
+  ]);
+  assert.equal(result.finalUrl, 'https://www.example.test/article');
+
+  const rejected = createMockClient([
+    response(302, { Location: 'http://feeds.example.test/insecure' }),
+  ], ARTICLE_DEFAULTS);
+  await assert.rejects(
+    () => rejected.client.getArticle({ url: feedUrl, allowedHosts }),
+    (error) => error.code === 'PROVIDER_REDIRECT_REJECTED',
+  );
+  assert.equal(rejected.calls.length, 1);
+
+  const loop = createMockClient([
+    response(302, { Location: '/one' }),
+    response(302, { Location: '/two' }),
+  ], { ...ARTICLE_DEFAULTS, maximumRedirects: 1 });
+  await assert.rejects(
+    () => loop.client.getArticle({ url: feedUrl, allowedHosts }),
+    (error) => error.code === 'PROVIDER_TOO_MANY_REDIRECTS',
+  );
+  assert.equal(loop.calls.length, 2);
+});
+
+test('article HTTP mode performs DNS validation before transport and never falls back after rejection', async () => {
+  let transportCalls = 0;
+  const client = createProviderHttpClient({
+    ...ARTICLE_DEFAULTS,
+    maximumAttempts: 1,
+    resolveHost: () => { throw new Error('PROVIDER_DNS_REJECTED'); },
+    transport: () => { transportCalls += 1; },
+  });
+  await assert.rejects(
+    () => client.getArticle({ url: feedUrl, allowedHosts }),
+    (error) => error.code === 'PROVIDER_DNS_REJECTED',
+  );
+  assert.equal(transportCalls, 0);
 });

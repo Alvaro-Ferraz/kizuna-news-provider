@@ -40,10 +40,12 @@ test('discovery returns normalized articles and preserves same titles across pro
   const result = await service.run();
   assert.equal(result.allSourcesFailed, false);
   assert.equal(result.response.articles.length, 2);
+  assert.equal(result.response.schemaVersion, 2);
   assert.deepEqual(result.response.articles.map((article) => article.providerKey), [
     'ann', 'animecorner',
   ]);
   assert.equal(result.response.articles[0].excerpt, 'Safe summary');
+  assert.ok(result.response.articles.every((article) => article.articleRef.length > 40));
   assert.equal(JSON.stringify(result.response).includes('contentHtml'), false);
 });
 

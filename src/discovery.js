@@ -7,6 +7,7 @@ const {
   sourceArticleSchema,
   sourceOutcomeSchema,
 } = require('./contracts');
+const { createArticleRefSigner } = require('./article-ref');
 const { toPlainText } = require('./text-normalization');
 
 const INVALID_LANGUAGE_TAG = Symbol('invalid-language-tag');
@@ -70,7 +71,7 @@ function normalizeTags(value) {
   return tags;
 }
 
-function normalizeArticle(rawArticle, source, discoveredAt) {
+function normalizeArticle(rawArticle, source, discoveredAt, articleRefSigner) {
   if (!rawArticle || typeof rawArticle !== 'object' || Array.isArray(rawArticle)) return null;
 
   try {
@@ -96,7 +97,7 @@ function normalizeArticle(rawArticle, source, discoveredAt) {
     if (!discoveryMethod) return null;
 
     const article = {
-      schemaVersion: 1,
+      schemaVersion: 2,
       providerKey: source.providerKey,
       sourceDisplayName: source.sourceDisplayName,
       providerArticleId: normalizeOptionalText(
@@ -107,6 +108,15 @@ function normalizeArticle(rawArticle, source, discoveredAt) {
         rawArticle.providerSlug || rawArticle.slug,
         CONTRACT_LIMITS.providerSlug,
       ),
+      articleRef: articleRefSigner.sign({
+        providerKey: source.providerKey,
+        providerArticleId: normalizeOptionalText(
+          rawArticle.providerArticleId,
+          CONTRACT_LIMITS.providerArticleId,
+        ),
+        canonicalSourceUrl: sourceUrl,
+        locale,
+      }),
       title,
       excerpt: normalizeOptionalText(rawArticle.excerpt, CONTRACT_LIMITS.excerpt),
       publishedAt: normalizeInstant(rawArticle.publishedAt || rawArticle.date),
@@ -133,7 +143,7 @@ function articleIdentity(article) {
   return `${article.providerKey}:url:${article.sourceUrl}`;
 }
 
-function normalizeSourceArticles(rawArticles, source, discoveredAt) {
+function normalizeSourceArticles(rawArticles, source, discoveredAt, articleRefSigner) {
   const warnings = [];
   const cappedArticles = rawArticles.slice(0, CONTRACT_LIMITS.articlesPerSource);
   if (rawArticles.length > cappedArticles.length) addWarning(warnings, 'ARTICLE_LIMIT_EXCEEDED');
@@ -141,7 +151,7 @@ function normalizeSourceArticles(rawArticles, source, discoveredAt) {
   const articles = [];
   const identities = new Map();
   for (const rawArticle of cappedArticles) {
-    const article = normalizeArticle(rawArticle, source, discoveredAt);
+    const article = normalizeArticle(rawArticle, source, discoveredAt, articleRefSigner);
     if (!article) {
       addWarning(warnings, 'INVALID_ITEM_DROPPED');
       continue;
@@ -204,6 +214,10 @@ function createDiscoveryService({
   now = () => new Date(),
   monotonicNow = () => Date.now(),
 }) {
+  const articleRefSigner = createArticleRefSigner({
+    secret: config.articleRefSecret,
+    now: () => now().getTime(),
+  });
   const enabledSources = config.enabledSources.map((providerKey) => {
     const source = sourceRegistry[providerKey];
     if (!source || typeof source.fetch !== 'function') {
@@ -256,7 +270,12 @@ function createDiscoveryService({
         };
       }
 
-      const normalized = normalizeSourceArticles(rawArticles, source, discoveredAt);
+      const normalized = normalizeSourceArticles(
+        rawArticles,
+        source,
+        discoveredAt,
+        articleRefSigner,
+      );
       const warnings = [];
       for (const warning of [...(structured?.warnings || []), ...normalized.warnings]) {
         addWarning(warnings, warning);
@@ -304,7 +323,7 @@ function createDiscoveryService({
       );
 
       const response = {
-        schemaVersion: 1,
+        schemaVersion: 2,
         serviceVersion: config.serviceVersion,
         fetchedAt,
         articles: results.flatMap((result) => result.articles),

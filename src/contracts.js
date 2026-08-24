@@ -14,6 +14,11 @@ const CONTRACT_LIMITS = Object.freeze({
   tag: 100,
   articlesPerSource: 100,
   discoveryResponseBytes: 2 * 1024 * 1024,
+  articleRef: 4096,
+  articleContentText: 80_000,
+  articleBlocks: 500,
+  articleAuthor: 200,
+  articleWarnings: 10,
 });
 
 const DISCOVERY_METHODS = Object.freeze([
@@ -59,11 +64,12 @@ const isoInstantSchema = z.string().refine(isIsoInstant, {
 });
 
 const sourceArticleSchema = z.object({
-  schemaVersion: z.literal(1),
+  schemaVersion: z.literal(2),
   providerKey: z.enum(V1_SOURCE_KEYS),
   sourceDisplayName: z.string().min(1).max(100),
   providerArticleId: z.string().min(1).max(CONTRACT_LIMITS.providerArticleId).nullable(),
   providerSlug: z.string().min(1).max(CONTRACT_LIMITS.providerSlug).nullable(),
+  articleRef: z.string().min(1).max(CONTRACT_LIMITS.articleRef),
   title: z.string().min(1).max(CONTRACT_LIMITS.title),
   excerpt: z.string().max(CONTRACT_LIMITS.excerpt).nullable(),
   publishedAt: isoInstantSchema.nullable(),
@@ -87,7 +93,7 @@ const sourceOutcomeSchema = z.object({
 }).strict();
 
 const discoveryRunResponseSchema = z.object({
-  schemaVersion: z.literal(1),
+  schemaVersion: z.literal(2),
   serviceVersion: z.string().min(1).max(100),
   fetchedAt: isoInstantSchema,
   articles: z.array(sourceArticleSchema).max(
@@ -98,9 +104,42 @@ const discoveryRunResponseSchema = z.object({
 
 const discoveryRequestSchema = z.object({}).strict();
 
+const articleExtractionRequestSchema = z.object({
+  articleRef: z.string().min(1).max(CONTRACT_LIMITS.articleRef),
+}).strict();
+
+const articleBlockSchema = z.object({
+  type: z.enum(['heading', 'paragraph', 'list', 'quote']),
+  text: z.string().min(1).max(CONTRACT_LIMITS.articleContentText),
+}).strict();
+
+const articleExtractionResponseSchema = z.object({
+  schemaVersion: z.literal(1),
+  serviceVersion: z.string().min(1).max(100),
+  extractedAt: isoInstantSchema,
+  article: z.object({
+    providerKey: z.enum(V1_SOURCE_KEYS),
+    providerArticleId: z.string().min(1).max(CONTRACT_LIMITS.providerArticleId).nullable(),
+    sourceUrl: httpsUrlSchema,
+    finalUrl: httpsUrlSchema,
+    canonicalUrl: httpsUrlSchema.nullable(),
+    title: z.string().min(1).max(CONTRACT_LIMITS.title).nullable(),
+    author: z.string().min(1).max(CONTRACT_LIMITS.articleAuthor).nullable(),
+    publishedAt: isoInstantSchema.nullable(),
+    language: nullableLanguageTagSchema,
+    selectorVersion: z.string().min(1).max(100),
+    contentText: z.string().min(1).max(CONTRACT_LIMITS.articleContentText),
+    blocks: z.array(articleBlockSchema).max(CONTRACT_LIMITS.articleBlocks),
+    warnings: z.array(z.string().min(1).max(100)).max(CONTRACT_LIMITS.articleWarnings),
+  }).strict(),
+}).strict();
+
 module.exports = {
   CONTRACT_LIMITS,
   DISCOVERY_METHODS,
+  articleBlockSchema,
+  articleExtractionRequestSchema,
+  articleExtractionResponseSchema,
   discoveryRequestSchema,
   discoveryRunResponseSchema,
   sourceArticleSchema,

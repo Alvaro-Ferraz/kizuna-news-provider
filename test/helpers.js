@@ -6,6 +6,7 @@ const { createApp } = require('../src/app');
 const { V1_SOURCE_KEYS, V1_SOURCE_METADATA } = require('../src/source-registry');
 
 const TEST_SECRET = 'test-machine-secret-with-at-least-32-characters';
+const TEST_ARTICLE_REF_SECRET = 'test-article-ref-secret-with-at-least-32-characters';
 const silentLogger = Object.freeze({ info() {}, error() {} });
 
 function createTestConfig(overrides = {}) {
@@ -13,6 +14,7 @@ function createTestConfig(overrides = {}) {
     nodeEnv: 'test',
     port: 3000,
     secret: TEST_SECRET,
+    articleRefSecret: TEST_ARTICLE_REF_SECRET,
     enabledSources: [...V1_SOURCE_KEYS],
     serviceVersion: '5.1.0-test',
     jsonBodyLimit: '16kb',
@@ -67,6 +69,7 @@ async function startTestApp({ config, dependencies } = {}) {
 }
 
 module.exports = {
+  TEST_ARTICLE_REF_SECRET,
   TEST_SECRET,
   createRawArticle,
   createTestConfig,

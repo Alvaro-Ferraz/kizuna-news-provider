@@ -27,6 +27,12 @@ class Semaphore {
     });
   }
 
+  tryAcquire() {
+    if (this.active >= this.limit) return null;
+    this.active += 1;
+    return this.createRelease();
+  }
+
   createRelease() {
     let released = false;
     return () => {

@@ -12,10 +12,14 @@ const appConfigSchema = z.object({
   nodeEnv: z.enum(['development', 'test', 'production']),
   port: z.number().int().min(1).max(65535),
   secret: z.string().min(32).max(512).regex(SECRET_PATTERN),
+  articleRefSecret: z.string().min(32).max(512).regex(SECRET_PATTERN),
   enabledSources: z.array(z.enum(V1_SOURCE_KEYS)).min(1),
   serviceVersion: z.string().min(1).max(100),
   jsonBodyLimit: z.string().min(1).max(20),
-}).strict();
+}).strict().refine((config) => config.secret !== config.articleRefSecret, {
+  path: ['articleRefSecret'],
+  message: 'Article reference secret must differ from machine authentication secret',
+});
 
 function parsePort(value) {
   if (value === undefined || value === '') return 3000;
@@ -74,6 +78,7 @@ function loadConfig(env = process.env) {
       nodeEnv,
       port: parsePort(env.PORT),
       secret: env.KIZUNA_NEWS_PROVIDER_SECRET,
+      articleRefSecret: env.KIZUNA_NEWS_ARTICLE_REF_SECRET,
       enabledSources: parseEnabledSources(env.ENABLED_SOURCES, nodeEnv),
       serviceVersion: packageMetadata.version,
       jsonBodyLimit: '16kb',

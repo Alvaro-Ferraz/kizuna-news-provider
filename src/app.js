@@ -4,7 +4,8 @@ const crypto = require('node:crypto');
 const express = require('express');
 
 const { createMachineAuth } = require('./auth');
-const { discoveryRequestSchema } = require('./contracts');
+const { createArticleExtractionService } = require('./article-extraction-service');
+const { articleExtractionRequestSchema, discoveryRequestSchema } = require('./contracts');
 const { createDiscoveryService } = require('./discovery');
 const { HttpError } = require('./errors');
 const defaultLogger = require('./logger');
@@ -31,6 +32,13 @@ function createApp(config, dependencies = {}) {
     logger,
     now: dependencies.now,
     monotonicNow: dependencies.monotonicNow,
+  });
+  const extractionService = dependencies.extractionService || createArticleExtractionService({
+    config,
+    sourceRegistry,
+    logger,
+    httpClient: dependencies.articleHttpClient,
+    now: dependencies.now,
   });
   const app = express();
 
@@ -83,6 +91,25 @@ function createApp(config, dependencies = {}) {
         throw new HttpError(502, 'ALL_SOURCES_FAILED', 'All enabled news sources failed');
       }
       res.json(result.response);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  internalRouter.post('/article-extractions', async (req, res, next) => {
+    try {
+      if (!req.is('application/json')) {
+        throw new HttpError(415, 'UNSUPPORTED_MEDIA_TYPE', 'Content-Type must be application/json');
+      }
+      const parsed = articleExtractionRequestSchema.safeParse(req.body);
+      if (!parsed.success) {
+        throw new HttpError(400, 'INVALID_REQUEST', 'Request body must contain only articleRef');
+      }
+      const result = await extractionService.extract({
+        articleRef: parsed.data.articleRef,
+        requestId: req.id,
+      });
+      res.json(result);
     } catch (error) {
       next(error);
     }
