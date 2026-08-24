@@ -21,6 +21,7 @@ function hasRequestBody(req) {
 }
 
 function createApp(config, dependencies = {}) {
+  const expressFactory = dependencies.express || express;
   const logger = dependencies.logger || defaultLogger;
   const sourceRegistry = dependencies.sourceRegistry || createV1SourceRegistry();
   const enabledDefinitions = config.enabledSources.map((key) => sourceRegistry[key]);
@@ -40,7 +41,7 @@ function createApp(config, dependencies = {}) {
     httpClient: dependencies.articleHttpClient,
     now: dependencies.now,
   });
-  const app = express();
+  const app = expressFactory();
 
   app.disable('x-powered-by');
 

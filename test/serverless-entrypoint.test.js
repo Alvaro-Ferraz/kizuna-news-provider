@@ -70,11 +70,16 @@ test('Vercel configuration delegates only the root Express app to framework dete
   const packageMetadata = JSON.parse(
     readFileSync(path.join(repositoryRoot, 'package.json'), 'utf8'),
   );
+  const serverlessEntry = readFileSync(path.join(repositoryRoot, 'app.js'), 'utf8');
+  const processEntry = readFileSync(path.join(repositoryRoot, 'server.js'), 'utf8');
   const vercelConfig = JSON.parse(
     readFileSync(path.join(repositoryRoot, 'vercel.json'), 'utf8'),
   );
 
   assert.equal(packageMetadata.type, undefined);
+  assert.match(serverlessEntry, /require\(['"]express['"]\)/u);
+  assert.match(serverlessEntry, /module\.exports = app/u);
+  assert.doesNotMatch(processEntry, /require\(['"]express['"]\)/u);
   assert.equal(vercelConfig.fluid, true);
   assert.equal(vercelConfig.builds, undefined);
   assert.equal(vercelConfig.functions, undefined);
