@@ -64,8 +64,8 @@ before authorizing spend.
 ## Runtime and container evidence
 
 The production image pins `node:22.23.2-alpine3.24`, installs the lockfile with
-`npm ci --omit=dev --ignore-scripts`, copies only the private runtime and four
-V1 adapters, and runs as Alpine's `node` user (UID/GID 1000). It contains no
+`npm ci --omit=dev --ignore-scripts`, copies only the private runtime and seven
+enabled adapters, and runs as Alpine's `node` user (UID/GID 1000). It contains no
 test suite, docs, scripts, legacy public API, frontend, or non-V1 adapters. It
 has no writable-volume requirement and passed with Docker `--read-only`.
 
@@ -142,7 +142,7 @@ bearer authentication at `GET /internal/v1/sources/health`.
 | --- | --- | --- |
 | `NODE_ENV` | Must be `production` | Blueprint literal |
 | `PORT` | Required; Render injects it; bind is `0.0.0.0` | Platform |
-| `ENABLED_SOURCES` | Required exact comma list; recommended all four V1 keys | Deployment config |
+| `ENABLED_SOURCES` | Required exact comma list; recommended all seven supported keys | Deployment config |
 | `KIZUNA_NEWS_PROVIDER_SECRET` | Required printable 32–512 chars; must differ from article-ref secret | Shared only with the future Kizuna API caller; rotate by overlapping deployment coordination in NEWS 01C |
 | `KIZUNA_NEWS_ARTICLE_REF_SECRET` | Required printable 32–512 chars and independent | Provider-only signing key; rotation invalidates outstanding 72-hour references, so coordinate or accept that bounded effect |
 

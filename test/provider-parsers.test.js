@@ -86,6 +86,27 @@ test('Crunchyroll localized fixtures preserve one GUID and correct language/loca
   assert.ok(normalized.warnings.includes('DUPLICATE_ITEM_DROPPED'));
 });
 
+test('new source RSS fixtures preserve direct identity, language, and optional images', async () => {
+  const cases = [
+    ['myanimelist', 'myanimelist.xml', 'mal-news-001', null],
+    ['otakuusa', 'otakuusa.xml', 'https://otakuusamagazine.com/?p=331237',
+      'https://otakuusamagazine.com/wp-content/uploads/synthetic.jpg'],
+    ['animeherald', 'animeherald.xml', 'https://www.animeherald.com/?p=78301',
+      'https://www-animeherald-com.exactdn.com/wp-content/uploads/synthetic.jpg'],
+  ];
+
+  for (const [providerKey, fixtureName, providerArticleId, imageUrl] of cases) {
+    const definition = V1_PROVIDER_DEFINITIONS[providerKey];
+    const parsed = await parseRss(fixture(fixtureName), definition);
+    assert.equal(parsed.articles.length, 1, providerKey);
+    assert.equal(parsed.articles[0].providerArticleId, providerArticleId, providerKey);
+    assert.equal(parsed.articles[0].imageUrl, imageUrl, providerKey);
+    assert.equal(parsed.articles[0].language, 'en', providerKey);
+    assert.equal(parsed.articles[0].locale, 'en-US', providerKey);
+    assert.ok(definition.articleHosts.includes(new URL(parsed.articles[0].sourceUrl).hostname));
+  }
+});
+
 test('RSS parser bounds excerpts, item counts, titles, and provider IDs', async () => {
   const definition = V1_PROVIDER_DEFINITIONS.ann;
   const longExcerpt = 'x'.repeat(EXCERPT_LIMIT + 50);

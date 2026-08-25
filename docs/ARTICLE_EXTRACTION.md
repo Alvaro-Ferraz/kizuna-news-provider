@@ -1,7 +1,7 @@
 # Article extraction boundary
 
-NEWS 01B.4 implements a private, transient HTML-to-text boundary for the four
-V1 providers. It does not implement summaries, translation, classification,
+NEWS 01B.4 implements a private, transient HTML-to-text boundary for the
+supported providers. It does not implement summaries, translation, classification,
 anime matching, story grouping, persistence, queues, a Kizuna client, frontend,
 or deployment.
 
@@ -73,11 +73,14 @@ fallback is deliberately not used.
 
 | Source | Selector version | Article root candidates | Title | Author | Date | Provider noise removed | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| ANN | `ann-v1` | `#pagecontent .news-content`, `.article-content`, `.meat` | `#pagecontent h1`, `h1.news-title` | byline/`rel=author` | scoped `time[datetime]`, posted-on | encyclopedia/sidebar/share/related/forum modules plus common noise | fixture supported; policy review required for production fetch |
+| ANN current | `ann-v2` | `#content-zone .KonaBody .meat` | `#page_header` | scoped page-title author | scoped page-title time | encyclopedia/sidebar/share/related/forum modules plus common noise | current fixture supported; `ann-v1` retained |
 | Anime Corner | `animecorner-v1` | `article .entry-content`, scoped single-post entry | entry/post `h1` | author name/`rel=author` | scoped time/entry date | Jetpack related, sharedaddy, ad/code blocks, tags/author box plus common noise | fixture supported |
-| Anime Trending | `animetrending-v1` | scoped entry/post/article content | entry/post `h1` | author name/`rel=author` | scoped time/published date | sharing, recommendations, post footer plus common noise | fixture supported |
+| Anime Trending current | `animetrending-v2` | scoped `.td-post-content` | entry/title `h1` | scoped author name | scoped time | sharing, recommendations, ad/post footer modules plus common noise | current fixture supported; `animetrending-v1` retained |
 | Crunchyroll historical | `crunchyroll-v1` | owned data attribute, article body, rich text | article/data-attribute `h1` | owned author attribute/byline | scoped time/date attribute | related/share/promo/CTA modules plus common noise | historical fixture retained |
 | Crunchyroll current | `crunchyroll-v2` | recognized empty Next.js `#app` shell, then `story.content.body` rich-text components | `story.content.headline` | referenced `rels[].content.component=author` | `story.content.article_date` | images, columns without rich text, cards, banners, Twitter/YouTube embeds, and unknown components | `latest/generalnews`, `announcements/announcement`, and `interviews/interviews` supported; production acquisition remains policy blocked |
+| MyAnimeList | `myanimelist-v1` | `.news-container .content.clearfix` | scoped news title | scoped news information | nullable | common noise; provider-specific line-break paragraphs | fixture supported |
+| Otaku USA | `otakuusa-v1` | scoped GeekMag post content | page title | scoped post author | validated Article JSON-LD | related posts, author box, top bar plus common noise | fixture supported |
+| Anime Herald | `animeherald-v1` | `article .entry-content` | entry title | entry author | entry time | support/share/author modules plus common noise | fixture supported |
 
 Common removal covers scripts, styles, noscript, iframe, SVG, canvas, forms and
 controls, object/embed, navigation, footer, aside, advertisements, newsletters,

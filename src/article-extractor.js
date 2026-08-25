@@ -3,7 +3,7 @@
 const cheerio = require('cheerio');
 
 const {
-  ARTICLE_EXTRACTION_DEFINITIONS,
+  ARTICLE_EXTRACTION_SELECTOR_REGISTRY,
   CRUNCHYROLL_V2_DEFINITION,
 } = require('./article-extraction-definitions');
 const { CONTRACT_LIMITS } = require('./contracts');
@@ -59,6 +59,44 @@ function extractPublishedAt($, selectors) {
     if (!Number.isNaN(parsed.getTime())) return parsed.toISOString();
   }
   return null;
+}
+
+function extractJsonLdMetadata($) {
+  const candidates = [];
+  $('script[type="application/ld+json"]').each((_index, element) => {
+    try {
+      const parsed = JSON.parse($(element).text());
+      const values = Array.isArray(parsed) ? parsed : [parsed];
+      for (const value of values) {
+        candidates.push(...(Array.isArray(value?.['@graph']) ? value['@graph'] : [value]));
+      }
+    } catch {
+      // Invalid optional metadata does not weaken the provider-specific body boundary.
+    }
+  });
+
+  const article = candidates.find((candidate) => {
+    const types = Array.isArray(candidate?.['@type'])
+      ? candidate['@type']
+      : [candidate?.['@type']];
+    return types.some((type) => ['Article', 'BlogPosting', 'NewsArticle'].includes(type));
+  });
+  if (!article || typeof article !== 'object') return {};
+
+  const rawAuthor = Array.isArray(article.author) ? article.author[0] : article.author;
+  const authorValue = typeof rawAuthor === 'string' ? rawAuthor : rawAuthor?.name;
+  const titleValue = normalizeText(article.headline);
+  const author = normalizeText(authorValue);
+  return {
+    title: titleValue
+      ? titleValue.slice(0, CONTRACT_LIMITS.title).trimEnd()
+      : null,
+    author: author
+      ? author.slice(0, CONTRACT_LIMITS.articleAuthor).trimEnd()
+      : null,
+    publishedAt: storyPublishedAt(article.datePublished),
+    language: canonicalLanguage(article.inLanguage),
+  };
 }
 
 function extractCanonicalUrl($, allowedHosts) {
@@ -129,6 +167,16 @@ function extractBlocks($, root, warnings) {
     if (!text) return;
     rawBlocks.push({ type: blockType(tagName), text });
   });
+  return limitBlocks(rawBlocks, warnings);
+}
+
+function extractBreakSeparatedBlocks($, root, warnings) {
+  const clone = root.clone();
+  clone.find('br').replaceWith('\uE000');
+  const rawBlocks = clone.text().split('\uE000')
+    .map((text) => normalizeText(text))
+    .filter(Boolean)
+    .map((text) => ({ type: 'paragraph', text }));
   return limitBlocks(rawBlocks, warnings);
 }
 
@@ -323,8 +371,11 @@ function extractCrunchyrollStory({ storyJson, sourceUrl, finalUrl, locale }) {
 }
 
 function extractArticle({ providerKey, html, finalUrl, sourceUrl, locale }) {
-  const definition = ARTICLE_EXTRACTION_DEFINITIONS[providerKey];
-  if (!definition) throw new ArticleExtractionError('ARTICLE_LAYOUT_UNSUPPORTED');
+  const definitions = ARTICLE_EXTRACTION_SELECTOR_REGISTRY[providerKey]
+    ?.filter((definition) => definition.inputType === 'html');
+  if (!definitions || definitions.length === 0) {
+    throw new ArticleExtractionError('ARTICLE_LAYOUT_UNSUPPORTED');
+  }
   if (typeof html !== 'string' || html.length === 0) {
     throw new ArticleExtractionError('ARTICLE_CONTENT_EMPTY');
   }
@@ -336,51 +387,64 @@ function extractArticle({ providerKey, html, finalUrl, sourceUrl, locale }) {
     throw new ArticleExtractionError('ARTICLE_EXTRACTION_FAILED');
   }
 
-  let root = null;
-  for (const selector of definition.articleRootSelectors) {
-    const candidate = $(selector).first();
-    if (candidate.length > 0) {
-      root = candidate;
-      break;
+  for (const definition of definitions) {
+    let root = null;
+    for (const selector of definition.articleRootSelectors) {
+      const candidate = $(selector).first();
+      if (candidate.length > 0) {
+        root = candidate;
+        break;
+      }
     }
+    if (!root) continue;
+
+    root.find(definition.removeSelectors.join(', ')).remove();
+    const warnings = [];
+    const extracted = definition.breakSeparatedText
+      ? extractBreakSeparatedBlocks($, root, warnings)
+      : extractBlocks($, root, warnings);
+    if (
+      extracted.contentText.length < MINIMUM_USEFUL_CONTENT
+      || CHALLENGE_PATTERN.test(extracted.contentText)
+    ) {
+      throw new ArticleExtractionError('ARTICLE_CONTENT_EMPTY');
+    }
+
+    const jsonLd = definition.useJsonLdMetadata ? extractJsonLdMetadata($) : {};
+    const title = firstText($, definition.titleSelectors, CONTRACT_LIMITS.title)
+      || jsonLd.title
+      || null;
+    const author = firstText($, definition.authorSelectors, CONTRACT_LIMITS.articleAuthor)
+      || jsonLd.author
+      || null;
+    const publishedAt = extractPublishedAt($, definition.dateSelectors)
+      || jsonLd.publishedAt
+      || null;
+    if (!author) warnings.push('AUTHOR_NOT_FOUND');
+    if (!publishedAt) warnings.push('PUBLISHED_AT_NOT_FOUND');
+
+    const allowedHosts = require('./source-registry').V1_SOURCE_METADATA[providerKey]
+      .allowedSourceHosts;
+    const canonicalUrl = extractCanonicalUrl($, allowedHosts);
+    const documentLanguage = canonicalLanguage($('html').attr('lang'));
+    const language = documentLanguage || jsonLd.language || canonicalLanguage(locale);
+
+    return {
+      sourceUrl,
+      finalUrl,
+      canonicalUrl,
+      title,
+      author,
+      publishedAt,
+      language,
+      selectorVersion: definition.selectorVersion,
+      contentText: extracted.contentText,
+      blocks: extracted.blocks,
+      warnings: warnings.slice(0, CONTRACT_LIMITS.articleWarnings),
+    };
   }
-  if (!root) throw new ArticleExtractionError('ARTICLE_LAYOUT_UNSUPPORTED');
 
-  root.find(definition.removeSelectors.join(', ')).remove();
-  const warnings = [];
-  const extracted = extractBlocks($, root, warnings);
-  if (
-    extracted.contentText.length < MINIMUM_USEFUL_CONTENT
-    || CHALLENGE_PATTERN.test(extracted.contentText)
-  ) {
-    throw new ArticleExtractionError('ARTICLE_CONTENT_EMPTY');
-  }
-
-  const title = firstText($, definition.titleSelectors, CONTRACT_LIMITS.title);
-  const author = firstText($, definition.authorSelectors, CONTRACT_LIMITS.articleAuthor);
-  const publishedAt = extractPublishedAt($, definition.dateSelectors);
-  if (!author) warnings.push('AUTHOR_NOT_FOUND');
-  if (!publishedAt) warnings.push('PUBLISHED_AT_NOT_FOUND');
-
-  const allowedHosts = require('./source-registry').V1_SOURCE_METADATA[providerKey]
-    .allowedSourceHosts;
-  const canonicalUrl = extractCanonicalUrl($, allowedHosts);
-  const documentLanguage = canonicalLanguage($('html').attr('lang'));
-  const language = documentLanguage || canonicalLanguage(locale);
-
-  return {
-    sourceUrl,
-    finalUrl,
-    canonicalUrl,
-    title,
-    author,
-    publishedAt,
-    language,
-    selectorVersion: definition.selectorVersion,
-    contentText: extracted.contentText,
-    blocks: extracted.blocks,
-    warnings: warnings.slice(0, CONTRACT_LIMITS.articleWarnings),
-  };
+  throw new ArticleExtractionError('ARTICLE_LAYOUT_UNSUPPORTED');
 }
 
 module.exports = {

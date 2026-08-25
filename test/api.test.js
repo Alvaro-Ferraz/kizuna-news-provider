@@ -4,6 +4,7 @@ const assert = require('node:assert/strict');
 const test = require('node:test');
 
 const { SourceHealthStore } = require('../src/source-health-store');
+const { V1_SOURCE_KEYS } = require('../src/source-registry');
 const { createArticleRefSigner } = require('../src/article-ref');
 const { readFileSync } = require('node:fs');
 const path = require('node:path');
@@ -24,7 +25,7 @@ function readJson(response) {
 test('public health is minimal and never fetches a provider', async (t) => {
   let fetchCount = 0;
   const sourceRegistry = createTestRegistry(Object.fromEntries(
-    ['ann', 'animecorner', 'animetrending', 'crunchyroll'].map((key) => [key, () => {
+    V1_SOURCE_KEYS.map((key) => [key, () => {
       fetchCount += 1;
       return [];
     }]),

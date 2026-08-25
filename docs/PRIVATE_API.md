@@ -77,7 +77,7 @@ metadata, not identity or a Kizuna URL.
 Invalid or absent dates become `null`. HTML is reduced to plain text. Exact
 duplicates are removed only within one provider using `providerArticleId`, then
 the exact normalized `sourceUrl`; equal titles from distinct providers remain.
-All four enabled V1 adapters emit `DIRECT_RSS`; the wider discovery-method enum
+All seven enabled adapters emit `DIRECT_RSS`; the wider discovery-method enum
 is retained for schema compatibility with the NEWS 01B.2 contract.
 
 Contract limits are 500 characters for `title`, 2,000 for `excerpt`, 2,048 for

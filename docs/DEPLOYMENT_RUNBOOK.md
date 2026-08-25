@@ -62,7 +62,7 @@ branch needs isolated non-production values:
 | Variable | Required | Secret | Rule |
 | --- | --- | --- | --- |
 | `NODE_ENV` | yes | no | `production` |
-| `ENABLED_SOURCES` | yes | no | `ann,animecorner,animetrending,crunchyroll` |
+| `ENABLED_SOURCES` | yes | no | `ann,animecorner,animetrending,crunchyroll,myanimelist,otakuusa,animeherald` |
 | `KIZUNA_NEWS_PROVIDER_SECRET` | yes | yes | future Kizuna-to-provider machine Bearer |
 | `KIZUNA_NEWS_ARTICLE_REF_SECRET` | yes | yes | provider-only signing key, distinct from Bearer |
 

@@ -6,7 +6,10 @@ const baseUrl = (process.env.API_URL || '').replace(/\/$/u, '');
 const secret = process.env.KIZUNA_NEWS_PROVIDER_SECRET;
 const allowLive = process.env.ALLOW_LIVE_PROVIDER_TESTS === 'true';
 const allowExtraction = process.env.ALLOW_LIVE_ARTICLE_EXTRACTIONS === 'true';
-const extractionProviders = new Set(['animecorner', 'animetrending']);
+const extractionProviders = new Set([
+  'ann', 'animecorner', 'animetrending', 'crunchyroll',
+  'myanimelist', 'otakuusa', 'animeherald',
+]);
 
 if (!allowLive) {
   console.error('Set ALLOW_LIVE_PROVIDER_TESTS=true for the explicitly bounded live check.');

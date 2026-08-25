@@ -4,6 +4,9 @@
 > has been removed from runtime. Only private discovery/source-health routes and
 > minimal public liveness remain. The 13 upstream fetchers are still preserved;
 > only the four approved V1 identities can be enabled by the private registry.
+>
+> NEWS 01C.5A update (2026-08-25): the historical baseline below is preserved,
+> while the reviewed runtime registry now enables seven source identities.
 
 ## Snapshot
 

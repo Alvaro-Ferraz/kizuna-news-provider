@@ -4,6 +4,9 @@ const fetchANN = require('../utils/fetchANN');
 const fetchAnimeCorner = require('../utils/fetchAnimeCorner');
 const fetchAnimeTrending = require('../utils/fetchAnimeTrending');
 const fetchCrunchyroll = require('../utils/fetchCrunchyroll');
+const fetchMyAnimeList = require('../utils/fetchMyAnimeList');
+const fetchOtakuUSA = require('../utils/fetchOtakuNews');
+const fetchAnimeHerald = require('../utils/fetchAnimeHerald');
 const { V1_PROVIDER_DEFINITIONS } = require('./v1-provider-definitions');
 
 const V1_FETCHERS = Object.freeze({
@@ -11,6 +14,9 @@ const V1_FETCHERS = Object.freeze({
   animecorner: fetchAnimeCorner,
   animetrending: fetchAnimeTrending,
   crunchyroll: fetchCrunchyroll,
+  myanimelist: fetchMyAnimeList,
+  otakuusa: fetchOtakuUSA,
+  animeherald: fetchAnimeHerald,
 });
 
 const V1_SOURCE_KEYS = Object.freeze([
@@ -18,6 +24,9 @@ const V1_SOURCE_KEYS = Object.freeze([
   'animecorner',
   'animetrending',
   'crunchyroll',
+  'myanimelist',
+  'otakuusa',
+  'animeherald',
 ]);
 
 const V1_SOURCE_METADATA = Object.freeze({
@@ -40,6 +49,21 @@ const V1_SOURCE_METADATA = Object.freeze({
     sourceDisplayName: 'Crunchyroll',
     discoveryMethod: 'DIRECT_RSS',
     allowedSourceHosts: V1_PROVIDER_DEFINITIONS.crunchyroll.articleHosts,
+  }),
+  myanimelist: Object.freeze({
+    sourceDisplayName: 'MyAnimeList',
+    discoveryMethod: 'DIRECT_RSS',
+    allowedSourceHosts: V1_PROVIDER_DEFINITIONS.myanimelist.articleHosts,
+  }),
+  otakuusa: Object.freeze({
+    sourceDisplayName: 'Otaku USA',
+    discoveryMethod: 'DIRECT_RSS',
+    allowedSourceHosts: V1_PROVIDER_DEFINITIONS.otakuusa.articleHosts,
+  }),
+  animeherald: Object.freeze({
+    sourceDisplayName: 'Anime Herald',
+    discoveryMethod: 'DIRECT_RSS',
+    allowedSourceHosts: V1_PROVIDER_DEFINITIONS.animeherald.articleHosts,
   }),
 });
 

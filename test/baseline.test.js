@@ -32,6 +32,9 @@ const plannedV1SourceKeys = [
   'animecorner',
   'animetrending',
   'crunchyroll',
+  'myanimelist',
+  'otakuusa',
+  'animeherald',
 ];
 
 test('package metadata records the audited runtime baseline', () => {

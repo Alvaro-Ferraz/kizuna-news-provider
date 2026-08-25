@@ -7,10 +7,13 @@ fetches article pages, returns article bodies, or exposes raw RSS/XML.
 
 | Key | Display name | Method | Feed | Identity | Language / locale | Extraction / selector | Fallback |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `ann` | Anime News Network | `DIRECT_RSS` | `https://www.animenewsnetwork.com/news/rss.xml?ann-edition=us` | RSS GUID, then canonical source URL | `en` / `en-US` | supported / `ann-v1` | none |
+| `ann` | Anime News Network | `DIRECT_RSS` | `https://www.animenewsnetwork.com/news/rss.xml?ann-edition=us` | RSS GUID, then canonical source URL | `en` / `en-US` | supported / current `ann-v2`, historical `ann-v1` | none |
 | `animecorner` | Anime Corner | `DIRECT_RSS` | `https://animecorner.me/feed/` | RSS GUID, then canonical source URL | `en` / `en-US` | supported / `animecorner-v1` | none |
-| `animetrending` | Anime Trending | `DIRECT_RSS` | `https://anitrendz.net/news/feed/` | RSS GUID, then canonical source URL | `en` / `en-US` | supported / `animetrending-v1` | none; canonical URL removes the known happy-path redirect |
+| `animetrending` | Anime Trending | `DIRECT_RSS` | `https://anitrendz.net/news/feed/` | RSS GUID, then canonical source URL | `en` / `en-US` | supported / current `animetrending-v2`, historical `animetrending-v1` | none; canonical URL removes the known happy-path redirect |
 | `crunchyroll` | Crunchyroll | `DIRECT_RSS` | `https://cr-news-api-service.prd.crunchyrollsvc.com/v1/pt-BR/rss` | RSS GUID across locales, then canonical source URL | `pt` / `pt-BR` | technically supported / historical `crunchyroll-v1`, current `crunchyroll-v2`; production policy blocked | `https://cr-news-api-service.prd.crunchyrollsvc.com/v1/en-US/rss` (`en` / `en-US`) only after a primary failure |
+| `myanimelist` | MyAnimeList | `DIRECT_RSS` | `https://myanimelist.net/rss/news.xml` | RSS GUID, then canonical source URL | `en` / `en-US` | supported / `myanimelist-v1` | none |
+| `otakuusa` | Otaku USA | `DIRECT_RSS` | `https://otakuusamagazine.com/feed/` | RSS GUID, then canonical source URL | `en` / `en-US` | supported / `otakuusa-v1` | none |
+| `animeherald` | Anime Herald | `DIRECT_RSS` | `https://animeherald.com/feed/` | RSS GUID, then canonical source URL | `en` / `en-US` | supported / `animeherald-v1` | none |
 
 ## Provider behavior
 
@@ -56,6 +59,13 @@ The separate Kizuna policy audit classifies automated Crunchyroll acquisition
 as blocked pending express permission/licensing. This technical adapter does
 not supersede that policy gate and must not be treated as authorization to
 enable production ingestion.
+
+### MyAnimeList, Otaku USA, and Anime Herald
+
+All three use their direct RSS feeds and preserve English source content. Feed
+images remain optional: MyAnimeList currently provides none in the observed
+feed, while Otaku USA and Anime Herald may provide validated HTTPS images. No
+article page is fetched only to enrich discovery metadata.
 
 ## HTTP, cache, and failure semantics
 

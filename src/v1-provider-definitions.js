@@ -64,6 +64,48 @@ const V1_PROVIDER_DEFINITIONS = Object.freeze({
     imageFromFeed: true,
     imageFromEncodedContent: false,
   }),
+  myanimelist: Object.freeze({
+    providerKey: 'myanimelist',
+    sourceDisplayName: 'MyAnimeList',
+    discoveryMethod: 'DIRECT_RSS',
+    feedHosts: Object.freeze(['myanimelist.net', 'www.myanimelist.net']),
+    articleHosts: Object.freeze(['myanimelist.net', 'www.myanimelist.net']),
+    feeds: Object.freeze([Object.freeze({
+      url: 'https://myanimelist.net/rss/news.xml',
+      language: 'en',
+      locale: 'en-US',
+    })]),
+    imageFromFeed: true,
+    imageFromEncodedContent: true,
+  }),
+  otakuusa: Object.freeze({
+    providerKey: 'otakuusa',
+    sourceDisplayName: 'Otaku USA',
+    discoveryMethod: 'DIRECT_RSS',
+    feedHosts: Object.freeze(['otakuusamagazine.com', 'www.otakuusamagazine.com']),
+    articleHosts: Object.freeze(['otakuusamagazine.com', 'www.otakuusamagazine.com']),
+    feeds: Object.freeze([Object.freeze({
+      url: 'https://otakuusamagazine.com/feed/',
+      language: 'en',
+      locale: 'en-US',
+    })]),
+    imageFromFeed: true,
+    imageFromEncodedContent: true,
+  }),
+  animeherald: Object.freeze({
+    providerKey: 'animeherald',
+    sourceDisplayName: 'Anime Herald',
+    discoveryMethod: 'DIRECT_RSS',
+    feedHosts: Object.freeze(['animeherald.com', 'www.animeherald.com']),
+    articleHosts: Object.freeze(['animeherald.com', 'www.animeherald.com']),
+    feeds: Object.freeze([Object.freeze({
+      url: 'https://animeherald.com/feed/',
+      language: 'en',
+      locale: 'en-US',
+    })]),
+    imageFromFeed: true,
+    imageFromEncodedContent: true,
+  }),
 });
 
 module.exports = { V1_PROVIDER_DEFINITIONS };

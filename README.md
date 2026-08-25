@@ -20,7 +20,7 @@ The runtime surface is intentionally small:
 There is no landing page, browser API, CORS support, public news/search/RSS
 endpoint, arbitrary-URL extractor, or cache-clear endpoint.
 
-The four V1 sources use bounded direct RSS discovery. ANN and Crunchyroll no
+The seven supported sources use bounded direct RSS discovery. ANN and Crunchyroll no
 longer use Google News, Anime Trending uses its canonical trailing-slash feed,
 and Crunchyroll tries `pt-BR` before its bounded `en-US` fallback. See
 [docs/V1_SOURCES.md](docs/V1_SOURCES.md) for exact source and cache semantics.

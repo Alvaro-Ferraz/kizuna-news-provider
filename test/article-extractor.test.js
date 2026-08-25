@@ -14,13 +14,16 @@ const { CONTRACT_LIMITS } = require('../src/contracts');
 
 const fixtureDirectory = path.join(__dirname, 'fixtures');
 const cases = [
-  ['ann', 'ann-article.html', 'https://www.animenewsnetwork.com/news/example/.1', 'ann-v1'],
+  ['ann', 'ann-article-v2.html', 'https://www.animenewsnetwork.com/news/2026-08-25/synthetic/.240972', 'ann-v2'],
   ['animecorner', 'animecorner-article.html', 'https://animecorner.me/northern-lights-project/', 'animecorner-v1'],
-  ['animetrending', 'animetrending-article.html', 'https://anitrendz.net/news/windward-anime-update/', 'animetrending-v1'],
+  ['animetrending', 'animetrending-article-v2.html', 'https://anitrendz.net/news/2026/08/25/synthetic-current-layout/', 'animetrending-v2'],
   ['crunchyroll', 'crunchyroll-article.html', 'https://www.crunchyroll.com/pt-br/news/latest/example', 'crunchyroll-v1'],
+  ['myanimelist', 'myanimelist-article.html', 'https://myanimelist.net/news/70000001', 'myanimelist-v1'],
+  ['otakuusa', 'otakuusa-article.html', 'https://otakuusamagazine.com/synthetic-news/', 'otakuusa-v1'],
+  ['animeherald', 'animeherald-article.html', 'https://www.animeherald.com/2026/08/25/synthetic-news/', 'animeherald-v1'],
 ];
 
-test('four provider-specific extractors return semantic text blocks and remove known noise', () => {
+test('provider-specific extractors return semantic text blocks and remove known noise', () => {
   for (const [providerKey, fixture, url, selectorVersion] of cases) {
     const result = extractArticle({
       providerKey,
@@ -32,13 +35,38 @@ test('four provider-specific extractors return semantic text blocks and remove k
     assert.equal(result.selectorVersion, selectorVersion);
     assert.ok(result.title);
     assert.ok(result.author);
-    assert.ok(result.publishedAt);
+    if (providerKey === 'myanimelist') {
+      assert.ok(result.warnings.includes('PUBLISHED_AT_NOT_FOUND'));
+    } else {
+      assert.ok(result.publishedAt);
+    }
     assert.ok(result.contentText.length >= 200);
-    assert.ok(result.blocks.some((block) => block.type === 'heading'));
-    assert.ok(result.blocks.some((block) => block.type === 'list' || block.type === 'quote'));
+    if (providerKey === 'myanimelist') {
+      assert.ok(result.blocks.every((block) => block.type === 'paragraph'));
+    } else {
+      assert.ok(result.blocks.some((block) => block.type === 'heading'));
+      assert.ok(result.blocks.some((block) => block.type === 'list' || block.type === 'quote'));
+    }
     assert.equal(/noise|subscribe|promoção|conteúdo relacionado/iu.test(result.contentText), false);
     assert.equal(Object.hasOwn(result, 'html'), false);
     assert.equal(Object.hasOwn(result, 'rawHtml'), false);
+  }
+});
+
+test('historical ANN and Anime Trending V1 fixtures remain supported', () => {
+  for (const [providerKey, fixtureName, sourceUrl, selectorVersion] of [
+    ['ann', 'ann-article.html', 'https://www.animenewsnetwork.com/news/example/.1', 'ann-v1'],
+    ['animetrending', 'animetrending-article.html',
+      'https://anitrendz.net/news/windward-anime-update/', 'animetrending-v1'],
+  ]) {
+    const result = extractArticle({
+      providerKey,
+      html: readFileSync(path.join(fixtureDirectory, fixtureName), 'utf8'),
+      sourceUrl,
+      finalUrl: sourceUrl,
+      locale: 'en-US',
+    });
+    assert.equal(result.selectorVersion, selectorVersion);
   }
 });
 
@@ -130,7 +158,8 @@ test('contentText and blocks truncate safely at the explicit character and block
 
 test('selector definitions are explicit for every V1 provider', () => {
   assert.deepEqual(Object.keys(ARTICLE_EXTRACTION_DEFINITIONS).sort(), [
-    'animecorner', 'animetrending', 'ann', 'crunchyroll',
+    'animecorner', 'animeherald', 'animetrending', 'ann', 'crunchyroll',
+    'myanimelist', 'otakuusa',
   ]);
   for (const definition of Object.values(ARTICLE_EXTRACTION_DEFINITIONS)) {
     assert.ok(definition.articleRootSelectors.length > 0);
@@ -139,5 +168,14 @@ test('selector definitions are explicit for every V1 provider', () => {
   assert.deepEqual(
     ARTICLE_EXTRACTION_SELECTOR_REGISTRY.crunchyroll.map(({ selectorVersion }) => selectorVersion),
     ['crunchyroll-v2', 'crunchyroll-v1'],
+  );
+  assert.deepEqual(
+    ARTICLE_EXTRACTION_SELECTOR_REGISTRY.ann.map(({ selectorVersion }) => selectorVersion),
+    ['ann-v2', 'ann-v1'],
+  );
+  assert.deepEqual(
+    ARTICLE_EXTRACTION_SELECTOR_REGISTRY.animetrending
+      .map(({ selectorVersion }) => selectorVersion),
+    ['animetrending-v2', 'animetrending-v1'],
   );
 });

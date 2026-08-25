@@ -76,7 +76,7 @@ response bounds, and XML hardening are implemented in NEWS 01B.3.
 NEWS 01B.4 resolves signed `articleRef`, independent article URL validation,
 article DNS/pinning and redirect controls, private/reserved address rejection,
 article response bounds, HTML-to-text parsing, structured blocks, extraction
-capacity/circuit controls, and four provider-specific selector fixtures.
+capacity/circuit controls, and provider-specific versioned selector fixtures.
 
 The service is still not production-ready. NEWS 01B.5 owns hosting/runtime
 measurement, deployment configuration, telemetry, operational secret handling,

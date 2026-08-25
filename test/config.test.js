@@ -6,7 +6,7 @@ const test = require('node:test');
 const { loadConfig } = require('../src/config');
 const { TEST_ARTICLE_REF_SECRET, TEST_SECRET } = require('./helpers');
 
-test('development defaults to the four V1 sources', () => {
+test('development defaults to the seven supported sources', () => {
   const config = loadConfig({
     NODE_ENV: 'development',
     KIZUNA_NEWS_PROVIDER_SECRET: TEST_SECRET,
@@ -14,6 +14,7 @@ test('development defaults to the four V1 sources', () => {
   });
   assert.deepEqual(config.enabledSources, [
     'ann', 'animecorner', 'animetrending', 'crunchyroll',
+    'myanimelist', 'otakuusa', 'animeherald',
   ]);
 });
 
@@ -55,7 +56,7 @@ test('production requires an independent secret and explicit sources', () => {
     PORT: '10000',
     KIZUNA_NEWS_PROVIDER_SECRET: TEST_SECRET,
     KIZUNA_NEWS_ARTICLE_REF_SECRET: TEST_ARTICLE_REF_SECRET,
-    ENABLED_SOURCES: 'ann,animecorner,animetrending,crunchyroll',
+    ENABLED_SOURCES: 'ann,animecorner,animetrending,crunchyroll,myanimelist,otakuusa,animeherald',
   });
   assert.equal(valid.port, 10000);
 });
